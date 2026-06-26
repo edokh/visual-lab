@@ -233,6 +233,7 @@
             dFlux: 0,
             emf: 0,
             needle: 0,
+            lampGlow: 0,
             switchClosed: false,
             primaryCurrent: 0,
             prevPrimaryCurrent: 0,
@@ -461,6 +462,45 @@
             }
         }
 
+        function drawLamp(x, y, glow) {
+            const g = clamp(glow, 0, 1);
+
+            if (g > 0.01) {
+                const halo = ctx.createRadialGradient(x, y, 4, x, y, 34);
+                halo.addColorStop(0, `rgba(255,210,120,${0.25 + g * 0.55})`);
+                halo.addColorStop(1, 'rgba(255,210,120,0)');
+                ctx.fillStyle = halo;
+                ctx.beginPath();
+                ctx.arc(x, y, 34, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            ctx.fillStyle = '#d7dee8';
+            ctx.strokeStyle = '#7f8fa1';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.arc(x, y, 18, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.fillStyle = `rgba(255,205,90,${0.15 + g * 0.75})`;
+            ctx.beginPath();
+            ctx.arc(x - 6, y, 5.5, 0, Math.PI * 2);
+            ctx.arc(x + 6, y, 5.5, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#ffd166';
+            ctx.font = '12px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'top';
+            ctx.fillText('مصباح', x, y + 24);
+
+            return {
+                top: { x, y: y - 18 },
+                bottom: { x, y: y + 18 }
+            };
+        }
+
         function getMagnetLayout() {
             return {
                 coilX: W * 0.35,
@@ -513,6 +553,9 @@
 
             state.dFlux = (state.flux - state.prevFlux) / DT;
             state.emf = -state.dFlux * 0.9;
+            const lampTarget = mode === 'switchPulse' ? clamp((Math.abs(state.emf) - 8) / 16, 0, 1) : 0;
+            state.lampGlow += (lampTarget - state.lampGlow) * 0.22;
+            state.lampGlow *= 0.97;
             const needleTarget = clamp(state.emf * 0.45, -1, 1);
             state.needle += (needleTarget - state.needle) * 0.26;
             state.needle *= 0.985;
@@ -632,6 +675,8 @@
             const secH = 210;
             drawVerticalCoil(secX, secY, secH, 29, 20, '#8ec8f2', '#6eaedc');
 
+            const lamp = drawLamp(W * 0.80, H * 0.50, state.lampGlow);
+
             const priX = secX;
             const priY = H * 0.43;
             const priH = 130;
@@ -662,21 +707,27 @@
             drawWire([
                 [secX + 38, secY + 8],
                 [W * 0.73, secY + 8],
-                [W * 0.73, g.top.y],
-                [g.top.x, g.top.y]
+                [W * 0.73, lamp.top.y],
+                [lamp.top.x, lamp.top.y]
             ], '#8ec8f2', Math.abs(state.needle) * 0.45);
 
             drawWire([
                 [secX + 38, secY + secH - 8],
                 [W * 0.73, secY + secH - 8],
-                [W * 0.73, g.bottom.y],
-                [g.bottom.x, g.bottom.y]
+                [W * 0.73, lamp.bottom.y],
+                [lamp.bottom.x, lamp.bottom.y]
             ], '#8ec8f2', Math.abs(state.needle) * 0.45);
+
+            drawWire([
+                [lamp.top.x, lamp.top.y],
+                [lamp.top.x, secY + 8],
+                [secX - 6, secY + 8]
+            ], '#ffd166', state.lampGlow * 0.8);
 
             ctx.fillStyle = '#ffaa44';
             ctx.font = 'bold 13px Arial';
             ctx.textAlign = 'right';
-            ctx.fillText('غلق/فتح المفتاح يولد انحرافًا لحظيًا فقط، ثم يعود المؤشر للصفر عند ثبات التيار', W - 16, 16);
+            ctx.fillText('عند الغلق أو الفتح يولد Back EMF نبضة قصيرة تشعل المصباح للحظة', W - 16, 16);
         }
 
         function canvasPoint(e) {
@@ -769,6 +820,7 @@
             state.dFlux = 0;
             state.emf = 0;
             state.needle = 0;
+            state.lampGlow = 0;
             state.primaryCurrent = 0;
             state.prevPrimaryCurrent = 0;
         });
@@ -790,6 +842,7 @@
             state.dFlux = 0;
             state.emf = 0;
             state.needle = 0;
+            state.lampGlow = 0;
             state.switchClosed = false;
             state.primaryCurrent = 0;
             state.prevPrimaryCurrent = 0;
