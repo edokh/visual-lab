@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>التيار المستحث في ساق متحركة</title>
+    <link rel="stylesheet" href="css/back-nav.css" />
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #0f0f1a;
+            color: #e0e0e0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 0;
+            margin: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        h1 {
+            font-size: 1.2rem;
+            margin: 0 0 8px 0;
+            color: #88ccff;
+            flex-shrink: 0;
+        }
+
+        .lab-container {
+            background: #1a1a2e;
+            border-radius: 0;
+            padding: 15px;
+            box-shadow: none;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            flex: 1;
+            background: #111122;
+            border-radius: 0;
+            border: 1px solid #2a2a4a;
+            min-height: 0;
+            cursor: grab;
+            touch-action: none;
+        }
+
+        canvas.dragging {
+            cursor: grabbing;
+        }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px 20px;
+            margin-top: 8px;
+            align-items: center;
+            background: #141428;
+            padding: 10px 12px;
+            border-radius: 0;
+            border: 1px solid #2a2a4a;
+            flex-shrink: 0;
+            font-size: 0.75rem;
+        }
+
+        .controls label {
+            font-size: 0.85rem;
+            color: #aaa;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .controls input[type="range"] {
+            width: 110px;
+            accent-color: #4a8cff;
+        }
+
+        .btn {
+            background: #2a4a8a;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 6px 16px;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            background: #3a6aaa;
+        }
+
+        .btn.reset {
+            background: #6a2a3a;
+        }
+
+        .btn.reset:hover {
+            background: #8a3a5a;
+        }
+
+        .info {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px 24px;
+            margin-top: 6px;
+            font-size: 0.7rem;
+            color: #99aacc;
+            flex-shrink: 0;
+        }
+
+        .info span {
+            background: #1a1a30;
+            padding: 4px 12px;
+            border-radius: 6px;
+        }
+
+        .info .val {
+            color: #88ddff;
+            font-weight: 600;
+        }
+
+        .legend {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            font-size: 0.7rem;
+            margin-top: 4px;
+            flex-shrink: 0;
+        }
+
+        .legend-dot {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 4px;
+            vertical-align: middle;
+        }
+    </style>
+</head>
+
+<body>
+    <a class="vl-back" href="index.html" aria-label="العودة">
+        <span class="vl-back__icon">&#8592;</span>
+        <span>رجوع</span>
+    </a>
+
+    <div class="lab-container">
+        <h1>💡 شكل (13): التيار المستحث في ساق متحركة داخل مجال مغناطيسي</h1>
+        <canvas id="railCanvas" width="1000" height="600"></canvas>
+
+        <div class="controls">
+            <label>كثافة المجال B
+                <input type="range" id="bField" min="0" max="300" value="160">
+            </label>
+
+            <label>مقاومة الدائرة R
+                <input type="range" id="resistance" min="1" max="30" value="8">
+            </label>
+
+            <label>طول الساق ℓ
+                <input type="range" id="rodLen" min="160" max="320" value="230">
+            </label>
+
+            <button class="btn" id="centerBtn">إرجاع الساق للوسط</button>
+            <button class="btn reset" id="resetBtn">تصفير القياسات</button>
+        </div>
+
+        <div class="info">
+            <span>سرعة الساق v: <span class="val" id="vVal">0.00</span> m/s</span>
+            <span>ε = vBℓ: <span class="val" id="emfVal">0.000</span> V</span>
+            <span>I = ε/R: <span class="val" id="iVal">0.000</span> A</span>
+            <span>قوة الكبح المغناطيسي F<sub>B2</sub>: <span class="val" id="fVal">0.000</span> N</span>
+            <span>اتجاه التيار: <span class="val" id="dirVal">لا يوجد</span></span>
+        </div>
+
+        <div class="legend">
+            <span><span class="legend-dot" style="background:#8ec8f2;"></span> مجال مغناطيسي (× إلى الداخل)</span>
+            <span><span class="legend-dot" style="background:#ff9f9f;"></span> ساق موصلة متحركة</span>
+            <span><span class="legend-dot" style="background:#ffd166;"></span> مصباح الدائرة</span>
+            <span style="color:#ffaa44;">اسحب الساق أفقيًا؛ عند الثبات يصبح التيار المستحث ≈ صفر</span>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('railCanvas');
+        const ctx = canvas.getContext('2d');
+        const W = canvas.width;
+        const H = canvas.height;
+
+        const bField = document.getElementById('bField');
+        const resistance = document.getElementById('resistance');
+        const rodLen = document.getElementById('rodLen');
+        const centerBtn = document.getElementById('centerBtn');
+        const resetBtn = document.getElementById('resetBtn');
+
+        const vVal = document.getElementById('vVal');
+        const emfVal = document.getElementById('emfVal');
+        const iVal = document.getElementById('iVal');
+        const fVal = document.getElementById('fVal');
+        const dirVal = document.getElementById('dirVal');
+
+        const state = {
+            rodX: 470,
+            prevRodX: 470,
+            vel: 0,
+            emf: 0,
+            current: 0,
+            force: 0,
+            dragging: false,
+            dragOffsetX: 0,
+            smoothLamp: 0
+        };
+
+        const DT = 1 / 60;
+
+        function clamp(v, min, max) {
+            return Math.max(min, Math.min(max, v));
+        }
+
+        function drawGrid() {
+            ctx.strokeStyle = '#1a1a30';
+            ctx.lineWidth = 0.5;
+            for (let x = 0; x <= W; x += 50) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, H);
+                ctx.stroke();
+            }
+            for (let y = 0; y <= H; y += 50) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(W, y);
+                ctx.stroke();
+            }
+        }
+
+        function drawArrow(x1, y1, x2, y2, color, width) {
+            const dx = x2 - x1;
+            const dy = y2 - y1;
+            const len = Math.sqrt(dx * dx + dy * dy);
+            if (len < 1) return;
+
+            const ux = dx / len;
+            const uy = dy / len;
+            const head = 9;
+            const hw = 5;
+
+            ctx.strokeStyle = color;
+            ctx.lineWidth = width;
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.stroke();
+
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.moveTo(x2, y2);
+            ctx.lineTo(x2 - ux * head + uy * hw, y2 - uy * head - ux * hw);
+            ctx.lineTo(x2 - ux * head - uy * hw, y2 - uy * head + ux * hw);
+            ctx.closePath();
+            ctx.fill();
+        }
+
+        function drawLamp(x, y, intensity) {
+            const glow = clamp(intensity, 0, 1);
+            if (glow > 0.01) {
+                const g = ctx.createRadialGradient(x, y, 4, x, y, 36);
+                g.addColorStop(0, `rgba(255,234,150,${0.35 + glow * 0.5})`);
+                g.addColorStop(1, 'rgba(255,234,150,0)');
+                ctx.fillStyle = g;
+                ctx.beginPath();
+                ctx.arc(x, y, 36, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            ctx.fillStyle = '#c9d6df';
+            ctx.strokeStyle = '#7c8e9a';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(x, y, 16, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.fillStyle = `rgba(255,217,102,${0.25 + glow * 0.75})`;
+            ctx.beginPath();
+            ctx.arc(x, y, 10, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#7c8e9a';
+            ctx.fillRect(x - 7, y + 12, 14, 10);
+            ctx.fillStyle = '#ffd166';
+            ctx.font = 'bold 12px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('مصباح', x, y + 40);
+        }
+
+        function drawWire(points, core, glow) {
+            if (!points || points.length < 2) return;
+            ctx.lineJoin = 'round';
+            ctx.lineCap = 'round';
+
+            ctx.beginPath();
+            ctx.moveTo(points[0][0], points[0][1]);
+            for (let i = 1; i < points.length; i++) ctx.lineTo(points[i][0], points[i][1]);
+            ctx.strokeStyle = '#1e2430';
+            ctx.lineWidth = 7;
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(points[0][0], points[0][1]);
+            for (let i = 1; i < points.length; i++) ctx.lineTo(points[i][0], points[i][1]);
+            ctx.strokeStyle = core;
+            ctx.lineWidth = 3.4;
+            ctx.stroke();
+
+            if (glow > 0.01) {
+                ctx.save();
+                ctx.beginPath();
+                ctx.moveTo(points[0][0], points[0][1]);
+                for (let i = 1; i < points.length; i++) ctx.lineTo(points[i][0], points[i][1]);
+                ctx.strokeStyle = `rgba(255,230,130,${clamp(glow, 0, 0.75)})`;
+                ctx.lineWidth = 1.9;
+                ctx.shadowColor = `rgba(255,210,110,${clamp(glow + 0.1, 0, 0.9)})`;
+                ctx.shadowBlur = 7;
+                ctx.stroke();
+                ctx.restore();
+            }
+        }
+
+        function getLayout() {
+            const l = parseFloat(rodLen.value);
+            const yMid = H * 0.5;
+            const topY = yMid - l / 2;
+            const bottomY = yMid + l / 2;
+            const leftX = 190;
+            const rightLimit = 760;
+            return {
+                topY,
+                bottomY,
+                leftX,
+                rightLimit,
+                rodW: 24,
+                lampX: 130,
+                lampY: topY - 46
+            };
+        }
+
+        function updateModel() {
+            const B = parseFloat(bField.value) / 100;
+            const R = parseFloat(resistance.value);
+            const L = parseFloat(rodLen.value) / 1000;
+
+            state.vel = (state.rodX - state.prevRodX) / DT * 0.01;
+            state.prevRodX = state.rodX;
+
+            state.emf = state.vel * B * L;
+            state.current = R > 0 ? state.emf / R : 0;
+            state.force = Math.abs(state.current) * L * B;
+
+            const lampTarget = clamp(Math.abs(state.current) * 5.5, 0, 1);
+            state.smoothLamp += (lampTarget - state.smoothLamp) * 0.25;
+
+            vVal.textContent = state.vel.toFixed(2);
+            emfVal.textContent = state.emf.toFixed(3);
+            iVal.textContent = state.current.toFixed(3);
+            fVal.textContent = state.force.toFixed(3);
+
+            const absI = Math.abs(state.current);
+            if (absI < 0.003) {
+                dirVal.textContent = 'لا يوجد (سكون)';
+            } else if (state.current > 0) {
+                dirVal.textContent = 'عكس عقارب الساعة';
+            } else {
+                dirVal.textContent = 'مع عقارب الساعة';
+            }
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, W, H);
+            drawGrid();
+
+            const B = parseFloat(bField.value) / 100;
+            const L = getLayout();
+            state.rodX = clamp(state.rodX, L.leftX + 36, L.rightLimit - 8);
+
+            ctx.fillStyle = 'rgba(100,170,255,0.06)';
+            ctx.fillRect(L.leftX, L.topY, L.rightLimit - L.leftX, L.bottomY - L.topY);
+            ctx.strokeStyle = 'rgba(120,180,255,0.42)';
+            ctx.strokeRect(L.leftX, L.topY, L.rightLimit - L.leftX, L.bottomY - L.topY);
+
+            ctx.fillStyle = `rgba(170,210,255,${0.2 + B * 0.15})`;
+            ctx.font = 'bold 14px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            for (let x = L.leftX + 22; x < L.rightLimit - 10; x += 32) {
+                for (let y = L.topY + 20; y < L.bottomY - 10; y += 28) {
+                    ctx.fillText('×', x, y);
+                }
+            }
+
+            ctx.strokeStyle = '#9aa7b5';
+            ctx.lineWidth = 6;
+            ctx.beginPath();
+            ctx.moveTo(L.leftX, L.topY);
+            ctx.lineTo(L.rightLimit, L.topY);
+            ctx.moveTo(L.leftX, L.bottomY);
+            ctx.lineTo(L.rightLimit, L.bottomY);
+            ctx.moveTo(L.leftX, L.topY);
+            ctx.lineTo(L.leftX, L.bottomY);
+            ctx.stroke();
+
+            drawLamp(L.lampX, L.lampY, state.smoothLamp);
+
+            drawWire([
+                [L.leftX, L.topY],
+                [L.leftX - 60, L.topY],
+                [L.leftX - 60, L.lampY],
+                [L.lampX - 16, L.lampY]
+            ], '#d0d8e2', state.smoothLamp * 0.5);
+
+            drawWire([
+                [L.lampX + 16, L.lampY],
+                [L.leftX - 42, L.lampY],
+                [L.leftX - 42, L.bottomY],
+                [L.leftX, L.bottomY]
+            ], '#d0d8e2', state.smoothLamp * 0.5);
+
+            ctx.fillStyle = '#f3b3b3';
+            ctx.fillRect(state.rodX - L.rodW / 2, L.topY - 4, L.rodW, L.bottomY - L.topY + 8);
+            ctx.strokeStyle = '#f6d3d3';
+            ctx.lineWidth = 1.5;
+            ctx.strokeRect(state.rodX - L.rodW / 2, L.topY - 4, L.rodW, L.bottomY - L.topY + 8);
+
+            drawArrow(state.rodX + 34, (L.topY + L.bottomY) / 2, state.rodX + 95, (L.topY + L.bottomY) / 2, '#88ff88', 2.4);
+            ctx.fillStyle = '#88ff88';
+            ctx.font = 'bold 13px Arial';
+            ctx.fillText('v', state.rodX + 103, (L.topY + L.bottomY) / 2 - 10);
+
+            if (Math.abs(state.current) > 0.003) {
+                const dir = state.current > 0 ? -1 : 1;
+                const y0 = (L.topY + L.bottomY) / 2;
+                drawArrow(state.rodX, y0 + 45 * dir, state.rodX, y0 - 55 * dir, '#ff9f9f', 2.4);
+                ctx.fillStyle = '#ff9f9f';
+                ctx.fillText('F_B1', state.rodX + 22, y0 - 56 * dir);
+            }
+
+            ctx.fillStyle = '#ffaa44';
+            ctx.font = 'bold 13px Arial';
+            ctx.textAlign = 'right';
+            ctx.fillText('اسحب الساق يمينًا/يسارًا: يزداد التيار المستحث بازدياد السرعة وكثافة المجال وطول الساق', W - 16, 16);
+            ctx.fillText('القانون المستخدم: I = (vBℓ) / R', W - 16, 36);
+        }
+
+        function pointerPos(e) {
+            const rect = canvas.getBoundingClientRect();
+            const sx = canvas.width / rect.width;
+            const sy = canvas.height / rect.height;
+            return {
+                x: (e.clientX - rect.left) * sx,
+                y: (e.clientY - rect.top) * sy
+            };
+        }
+
+        canvas.addEventListener('pointerdown', (e) => {
+            const p = pointerPos(e);
+            const L = getLayout();
+            const insideX = p.x >= state.rodX - L.rodW / 2 - 8 && p.x <= state.rodX + L.rodW / 2 + 8;
+            const insideY = p.y >= L.topY - 8 && p.y <= L.bottomY + 8;
+            if (!insideX || !insideY) return;
+
+            state.dragging = true;
+            state.dragOffsetX = p.x - state.rodX;
+            canvas.classList.add('dragging');
+            canvas.setPointerCapture(e.pointerId);
+        });
+
+        canvas.addEventListener('pointermove', (e) => {
+            if (!state.dragging) return;
+            const p = pointerPos(e);
+            const L = getLayout();
+            state.rodX = clamp(p.x - state.dragOffsetX, L.leftX + 36, L.rightLimit - 8);
+        });
+
+        function stopDragging(e) {
+            if (!state.dragging) return;
+            state.dragging = false;
+            canvas.classList.remove('dragging');
+            if (typeof e.pointerId === 'number') {
+                canvas.releasePointerCapture(e.pointerId);
+            }
+        }
+
+        canvas.addEventListener('pointerup', stopDragging);
+        canvas.addEventListener('pointercancel', stopDragging);
+        canvas.addEventListener('pointerleave', stopDragging);
+
+        centerBtn.addEventListener('click', () => {
+            state.rodX = 470;
+            state.prevRodX = state.rodX;
+        });
+
+        resetBtn.addEventListener('click', () => {
+            bField.value = '160';
+            resistance.value = '8';
+            rodLen.value = '230';
+            state.rodX = 470;
+            state.prevRodX = 470;
+            state.vel = 0;
+            state.emf = 0;
+            state.current = 0;
+            state.force = 0;
+            state.smoothLamp = 0;
+        });
+
+        function loop() {
+            updateModel();
+            draw();
+            requestAnimationFrame(loop);
+        }
+
+        loop();
+    </script>
+</body>
+
+</html>

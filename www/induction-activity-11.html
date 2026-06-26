@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>نشاط الحث الكهرومغناطيسي</title>
+    <link rel="stylesheet" href="css/back-nav.css" />
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #0f0f1a;
+            color: #e0e0e0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 0;
+            margin: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        h1 {
+            font-size: 1.2rem;
+            margin: 0 0 8px 0;
+            color: #88ccff;
+            flex-shrink: 0;
+        }
+
+        .lab-container {
+            background: #1a1a2e;
+            border-radius: 0;
+            padding: 15px;
+            box-shadow: none;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            flex: 1;
+            background: #111122;
+            border-radius: 0;
+            border: 1px solid #2a2a4a;
+            min-height: 0;
+            cursor: grab;
+            touch-action: none;
+        }
+
+        canvas.dragging {
+            cursor: grabbing;
+        }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px 20px;
+            margin-top: 8px;
+            align-items: center;
+            background: #141428;
+            padding: 10px 12px;
+            border-radius: 0;
+            border: 1px solid #2a2a4a;
+            flex-shrink: 0;
+            font-size: 0.75rem;
+        }
+
+        .controls label {
+            font-size: 0.85rem;
+            color: #aaa;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .controls input[type="range"] {
+            width: 110px;
+            accent-color: #4a8cff;
+        }
+
+        .controls select {
+            background: #1e1e3a;
+            color: #e0e0e0;
+            border: 1px solid #3a3a5a;
+            border-radius: 6px;
+            padding: 4px 8px;
+        }
+
+        .btn {
+            background: #2a4a8a;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 6px 16px;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            background: #3a6aaa;
+        }
+
+        .btn.reset {
+            background: #6a2a3a;
+        }
+
+        .btn.reset:hover {
+            background: #8a3a5a;
+        }
+
+        .btn.switch-on {
+            background: #2f7a4b;
+        }
+
+        .btn.switch-on:hover {
+            background: #399a5f;
+        }
+
+        .info {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px 24px;
+            margin-top: 6px;
+            font-size: 0.7rem;
+            color: #99aacc;
+            flex-shrink: 0;
+        }
+
+        .info span {
+            background: #1a1a30;
+            padding: 4px 12px;
+            border-radius: 6px;
+        }
+
+        .info .val {
+            color: #88ddff;
+            font-weight: 600;
+        }
+
+        .legend {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            font-size: 0.7rem;
+            margin-top: 4px;
+            flex-shrink: 0;
+        }
+
+        .legend-dot {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 4px;
+            vertical-align: middle;
+        }
+    </style>
+</head>
+
+<body>
+    <a class="vl-back" href="index.html" aria-label="العودة">
+        <span class="vl-back__icon">&#8592;</span>
+        <span>رجوع</span>
+    </a>
+    <div class="lab-container">
+        <h1>🧲 نشاط 11: توضيح ظاهرة الحث الكهرومغناطيسي</h1>
+        <canvas id="activityCanvas" width="1000" height="600"></canvas>
+
+        <div class="controls">
+            <label>نوع التجربة:
+                <select id="modeSelect">
+                    <option value="magnet">(11-a / 11-b) تحريك المغناطيس قرب الملف</option>
+                    <option value="moveCoil">(11-c) تحريك ملف ابتدائي قرب ملف ثانوي</option>
+                    <option value="switchPulse">(11-d) فتح/غلق مفتاح الملف الابتدائي</option>
+                </select>
+            </label>
+
+            <label>الشدة
+                <input type="range" id="strength" min="20" max="200" value="110">
+            </label>
+
+            <button class="btn" id="switchBtn">إغلاق المفتاح</button>
+            <button class="btn reset" id="resetBtn">إعادة تعيين</button>
+        </div>
+
+        <div class="info">
+            <span>الفيض Φ: <span class="val" id="fluxVal">0.000</span></span>
+            <span>dΦ/dt: <span class="val" id="dFluxVal">0.000</span></span>
+            <span>القوة الدافعة المستحثة: <span class="val" id="emfVal">0.000 V</span></span>
+            <span>انحراف الجلفانومتر: <span class="val" id="needleVal">0.000</span></span>
+            <span>اتجاه التيار المستحث: <span class="val" id="dirVal">لا يوجد</span></span>
+        </div>
+
+        <div class="legend">
+            <span><span class="legend-dot" style="background:#ffd166;"></span> مصدر/مجال ابتدائي</span>
+            <span><span class="legend-dot" style="background:#8ec8f2;"></span> ملف ثانوي + جلفانومتر</span>
+            <span><span class="legend-dot" style="background:#88ff88;"></span> استجابة الحث اللحظية</span>
+            <span style="color:#ffaa44;">المؤشر ينحرف عند تغير الفيض فقط ويعود للصفر عند الثبات</span>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('activityCanvas');
+        const ctx = canvas.getContext('2d');
+        const W = canvas.width;
+        const H = canvas.height;
+
+        const modeSelect = document.getElementById('modeSelect');
+        const strengthEl = document.getElementById('strength');
+        const switchBtn = document.getElementById('switchBtn');
+        const resetBtn = document.getElementById('resetBtn');
+
+        const fluxVal = document.getElementById('fluxVal');
+        const dFluxVal = document.getElementById('dFluxVal');
+        const emfVal = document.getElementById('emfVal');
+        const needleVal = document.getElementById('needleVal');
+        const dirVal = document.getElementById('dirVal');
+
+        const state = {
+            t: 0,
+            flux: 0,
+            prevFlux: 0,
+            dFlux: 0,
+            emf: 0,
+            needle: 0,
+            switchClosed: false,
+            primaryCurrent: 0,
+            prevPrimaryCurrent: 0,
+            movingCoilY: H * 0.12,
+            magnetY: H * 0.29,
+            dragging: null,
+            dragOffsetY: 0
+        };
+
+        const DT = 1 / 60;
+
+        function clamp(v, min, max) {
+            return Math.max(min, Math.min(max, v));
+        }
+
+        function drawGrid() {
+            ctx.strokeStyle = '#1a1a30';
+            ctx.lineWidth = 0.5;
+            for (let x = 0; x <= W; x += 50) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, H);
+                ctx.stroke();
+            }
+            for (let y = 0; y <= H; y += 50) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(W, y);
+                ctx.stroke();
+            }
+        }
+
+        function roundRect(x, y, w, h, r) {
+            const rr = Math.min(r, w / 2, h / 2);
+            ctx.beginPath();
+            ctx.moveTo(x + rr, y);
+            ctx.arcTo(x + w, y, x + w, y + h, rr);
+            ctx.arcTo(x + w, y + h, x, y + h, rr);
+            ctx.arcTo(x, y + h, x, y, rr);
+            ctx.arcTo(x, y, x + w, y, rr);
+            ctx.closePath();
+        }
+
+        function drawVerticalCoil(x, y, h, r, turns, colorA, colorB) {
+            ctx.strokeStyle = '#495867';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.ellipse(x, y, r + 10, 8, 0, 0, Math.PI * 2);
+            ctx.stroke();
+
+            const step = h / turns;
+            for (let i = 0; i < turns; i++) {
+                const yy = y + i * step;
+                ctx.strokeStyle = i % 2 === 0 ? colorA : colorB;
+                ctx.lineWidth = 2.4;
+                ctx.beginPath();
+                ctx.ellipse(x, yy, r, 6.2, 0, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+
+            ctx.strokeStyle = '#3c4f66';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.ellipse(x, y + h, r + 10, 8, 0, 0, Math.PI * 2);
+            ctx.stroke();
+        }
+
+        function drawMagnet(x, y) {
+            const w = 48;
+            const h = 96;
+            const grad = ctx.createLinearGradient(x, y, x, y + h);
+            grad.addColorStop(0, '#cbd5e1');
+            grad.addColorStop(0.5, '#a7b4c5');
+            grad.addColorStop(0.5, '#e85f5f');
+            grad.addColorStop(1, '#d43d3d');
+
+            roundRect(x - w / 2, y - h / 2, w, h, 8);
+            ctx.fillStyle = grad;
+            ctx.fill();
+            ctx.strokeStyle = '#6d7f95';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            ctx.fillStyle = '#1e293b';
+            ctx.font = 'bold 12px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('S', x, y - 20);
+            ctx.fillText('N', x, y + 26);
+        }
+
+        function drawBatteryAndSwitch(x, y) {
+            const bw = 76;
+            const bh = 72;
+            roundRect(x - bw / 2, y - bh / 2, bw, bh, 10);
+            const grad = ctx.createLinearGradient(x - bw / 2, y, x + bw / 2, y);
+            grad.addColorStop(0, '#e0aa7b');
+            grad.addColorStop(1, '#d79b6d');
+            ctx.fillStyle = grad;
+            ctx.fill();
+            ctx.strokeStyle = '#9b7a5d';
+            ctx.stroke();
+
+            const pHead = { x: x + bw / 2 - 8, y: y - bh / 2 + 4 };
+            const nHead = { x: x - bw / 2 + 8, y: y - bh / 2 + 4 };
+            ctx.fillStyle = '#6b7280';
+            ctx.beginPath();
+            ctx.arc(pHead.x, pHead.y, 3, 0, Math.PI * 2);
+            ctx.arc(nHead.x, nHead.y, 3, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#1f2937';
+            ctx.font = 'bold 11px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('+', pHead.x, pHead.y - 10);
+            ctx.fillText('-', nHead.x, nHead.y - 10);
+
+            const sX = x + 110;
+            const sY = y + 18;
+            ctx.strokeStyle = '#d8b35f';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(sX, sY, 4, 0, Math.PI * 2);
+            ctx.arc(sX + 44, sY, 4, 0, Math.PI * 2);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(sX + 3, sY - 1);
+            if (state.switchClosed) {
+                ctx.lineTo(sX + 41, sY);
+            } else {
+                ctx.lineTo(sX + 31, sY - 17);
+            }
+            ctx.stroke();
+
+            return {
+                pHead,
+                nHead,
+                switchLeft: { x: sX, y: sY },
+                switchRight: { x: sX + 44, y: sY }
+            };
+        }
+
+        function drawGalvanometer(x, y) {
+            const w = 96;
+            const h = 84;
+            roundRect(x - w / 2, y - h / 2, w, h, 8);
+            ctx.fillStyle = '#c6d4de';
+            ctx.fill();
+            ctx.strokeStyle = '#768a99';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            ctx.strokeStyle = '#374151';
+            ctx.lineWidth = 1.4;
+            ctx.beginPath();
+            ctx.arc(x, y + 8, 24, Math.PI, 0);
+            ctx.stroke();
+
+            for (let i = -4; i <= 4; i++) {
+                const t = (i / 4) * (Math.PI / 2);
+                const rx = x + Math.sin(t) * 24;
+                const ry = y + 8 - Math.cos(t) * 24;
+                const tx = x + Math.sin(t) * 29;
+                const ty = y + 8 - Math.cos(t) * 29;
+                ctx.beginPath();
+                ctx.moveTo(rx, ry);
+                ctx.lineTo(tx, ty);
+                ctx.stroke();
+            }
+
+            const a = clamp(state.needle, -1, 1) * (Math.PI / 2.25);
+            ctx.strokeStyle = '#e25757';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(x, y + 8);
+            ctx.lineTo(x + Math.sin(a) * 22, y + 8 - Math.cos(a) * 22);
+            ctx.stroke();
+
+            ctx.fillStyle = '#374151';
+            ctx.beginPath();
+            ctx.arc(x, y + 8, 3, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#2f3c48';
+            ctx.font = '11px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('جلفانوميتر', x, y + 35);
+
+            return {
+                top: { x: x - w / 2 - 8, y: y - 10 },
+                bottom: { x: x - w / 2 - 8, y: y + 24 }
+            };
+        }
+
+        function drawWire(points, core, glow) {
+            if (!points || points.length < 2) return;
+
+            ctx.lineJoin = 'round';
+            ctx.lineCap = 'round';
+
+            ctx.beginPath();
+            ctx.moveTo(points[0][0], points[0][1]);
+            for (let i = 1; i < points.length; i++) ctx.lineTo(points[i][0], points[i][1]);
+            ctx.strokeStyle = '#1e2430';
+            ctx.lineWidth = 7;
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(points[0][0], points[0][1]);
+            for (let i = 1; i < points.length; i++) ctx.lineTo(points[i][0], points[i][1]);
+            ctx.strokeStyle = core;
+            ctx.lineWidth = 3.4;
+            ctx.stroke();
+
+            if (glow > 0.01) {
+                ctx.save();
+                ctx.beginPath();
+                ctx.moveTo(points[0][0], points[0][1]);
+                for (let i = 1; i < points.length; i++) ctx.lineTo(points[i][0], points[i][1]);
+                ctx.strokeStyle = `rgba(255,245,170,${clamp(glow, 0, 0.7)})`;
+                ctx.lineWidth = 2;
+                ctx.shadowColor = `rgba(255,220,120,${clamp(glow + 0.1, 0, 0.9)})`;
+                ctx.shadowBlur = 8;
+                ctx.stroke();
+                ctx.restore();
+            }
+        }
+
+        function getMagnetLayout() {
+            return {
+                coilX: W * 0.35,
+                coilTop: H * 0.47,
+                coilH: 130,
+                magnetW: 48,
+                magnetH: 96,
+                minMagnetY: H * 0.14,
+                maxMagnetY: H * 0.64
+            };
+        }
+
+        function getMoveCoilLayout() {
+            return {
+                secX: W * 0.55,
+                secY: H * 0.25,
+                secH: 250,
+                secR: 29,
+                priX: W * 0.55,
+                priH: 104,
+                priR: 20,
+                minPriY: H * 0.08,
+                maxPriY: H * 0.56
+            };
+        }
+
+        function updateModel() {
+            const mode = modeSelect.value;
+            const s = parseFloat(strengthEl.value) / 100;
+
+            if (mode === 'magnet') {
+                const magnetLayout = getMagnetLayout();
+                const coilY = magnetLayout.coilTop;
+                const d = Math.max(20, Math.abs(state.magnetY - coilY));
+                state.flux = (s * 3.1) / (1 + Math.pow(d / 80, 2));
+            } else if (mode === 'moveCoil') {
+                const L = getMoveCoilLayout();
+                state.primaryCurrent = s * 2.2;
+                const secCenterY = L.secY + L.secH * 0.5;
+                const priCenterY = state.movingCoilY + L.priH * 0.5;
+                const d = Math.max(10, Math.abs(secCenterY - priCenterY));
+                state.flux = (state.primaryCurrent * 2.4) / (1 + Math.pow(d / 56, 2));
+            } else {
+                const targetI = state.switchClosed ? s * 2.4 : 0;
+                const tau = state.switchClosed ? 0.2 : 0.15;
+                const approach = 1 - Math.exp(-DT / tau);
+                state.primaryCurrent += (targetI - state.primaryCurrent) * approach;
+                state.flux = state.primaryCurrent * 1.4;
+            }
+
+            state.dFlux = (state.flux - state.prevFlux) / DT;
+            state.emf = -state.dFlux * 0.9;
+            const needleTarget = clamp(state.emf * 0.45, -1, 1);
+            state.needle += (needleTarget - state.needle) * 0.26;
+            state.needle *= 0.985;
+            state.prevFlux = state.flux;
+
+            fluxVal.textContent = state.flux.toFixed(3);
+            dFluxVal.textContent = state.dFlux.toFixed(3);
+            emfVal.textContent = `${state.emf.toFixed(3)} V`;
+            needleVal.textContent = state.needle.toFixed(3);
+
+            const n = Math.abs(state.needle);
+            if (n < 0.015) {
+                dirVal.textContent = 'لا يوجد (الصفر التدريجي)';
+            } else if (state.needle > 0) {
+                dirVal.textContent = 'اتجاه أول';
+            } else {
+                dirVal.textContent = 'اتجاه معاكس';
+            }
+        }
+
+        function drawModeMagnet() {
+            const L = getMagnetLayout();
+            const coilX = L.coilX;
+            const coilTop = L.coilTop;
+            const coilH = L.coilH;
+
+            drawVerticalCoil(coilX, coilTop, coilH, 26, 14, '#d99b59', '#b97632');
+            drawMagnet(coilX, state.magnetY);
+
+            const g = drawGalvanometer(W * 0.75, H * 0.50);
+
+            drawWire([
+                [coilX + 36, coilTop + 6],
+                [W * 0.61, coilTop + 6],
+                [W * 0.61, g.top.y],
+                [g.top.x, g.top.y]
+            ], '#8ec8f2', Math.abs(state.needle) * 0.45);
+
+            drawWire([
+                [coilX + 36, coilTop + coilH - 6],
+                [W * 0.61, coilTop + coilH - 6],
+                [W * 0.61, g.bottom.y],
+                [g.bottom.x, g.bottom.y]
+            ], '#8ec8f2', Math.abs(state.needle) * 0.45);
+
+            ctx.fillStyle = '#ffaa44';
+            ctx.font = 'bold 13px Arial';
+            ctx.textAlign = 'right';
+            ctx.fillText('اسحب المغناطيس يدويًا لأعلى/أسفل: الانحراف يظهر فقط عند تغير الفيض', W - 16, 16);
+        }
+
+        function drawModeMoveCoil() {
+            const L = getMoveCoilLayout();
+            const secX = L.secX;
+            const secY = L.secY;
+            const secH = L.secH;
+            const priX = L.priX;
+            const priY = state.movingCoilY;
+            const priH = L.priH;
+
+            drawVerticalCoil(secX, secY, secH, L.secR, 20, '#8ec8f2', '#6eaedc');
+            drawVerticalCoil(priX, priY, priH, L.priR, 13, '#d99b59', '#b97632');
+
+            ctx.fillStyle = 'rgba(220,80,80,0.9)';
+            ctx.beginPath();
+            ctx.moveTo(priX, secY - 34);
+            ctx.lineTo(priX - 24, secY - 68);
+            ctx.lineTo(priX + 24, secY - 68);
+            ctx.closePath();
+            ctx.fill();
+
+            const p = drawBatteryAndSwitch(W * 0.13, H * 0.22);
+            const g = drawGalvanometer(W * 0.83, H * 0.50);
+
+            drawWire([
+                [p.pHead.x, p.pHead.y],
+                [p.switchLeft.x, p.pHead.y],
+                [p.switchLeft.x, p.switchLeft.y]
+            ], '#d8b35f', Math.abs(state.primaryCurrent) * 0.35);
+
+            drawWire([
+                [p.switchRight.x, p.switchRight.y],
+                [priX - 34, p.switchRight.y],
+                [priX - 34, priY + 4],
+                [priX - 8, priY + 4]
+            ], '#d8b35f', Math.abs(state.primaryCurrent) * 0.35);
+
+            drawWire([
+                [priX - 8, priY + priH - 4],
+                [p.nHead.x, priY + priH - 4],
+                [p.nHead.x, p.nHead.y]
+            ], '#d8b35f', Math.abs(state.primaryCurrent) * 0.35);
+
+            drawWire([
+                [secX + 35, secY + 12],
+                [W * 0.72, secY + 12],
+                [W * 0.72, g.top.y],
+                [g.top.x, g.top.y]
+            ], '#8ec8f2', Math.abs(state.needle) * 0.45);
+
+            drawWire([
+                [secX + 35, secY + secH - 10],
+                [W * 0.72, secY + secH - 10],
+                [W * 0.72, g.bottom.y],
+                [g.bottom.x, g.bottom.y]
+            ], '#8ec8f2', Math.abs(state.needle) * 0.45);
+
+            ctx.fillStyle = '#ffaa44';
+            ctx.font = 'bold 13px Arial';
+            ctx.textAlign = 'right';
+            ctx.fillText('اسحب الملف الابتدائي يدويًا لأعلى/أسفل لإدخاله داخل الملف الثانوي كما في الشكل', W - 16, 16);
+        }
+
+        function drawModeSwitchPulse() {
+            const secX = W * 0.54;
+            const secY = H * 0.34;
+            const secH = 210;
+            drawVerticalCoil(secX, secY, secH, 29, 20, '#8ec8f2', '#6eaedc');
+
+            const priX = secX;
+            const priY = H * 0.43;
+            const priH = 130;
+            drawVerticalCoil(priX, priY, priH, 22, 13, '#d99b59', '#b97632');
+
+            const p = drawBatteryAndSwitch(W * 0.16, H * 0.2);
+            const g = drawGalvanometer(W * 0.84, H * 0.50);
+
+            drawWire([
+                [p.pHead.x, p.pHead.y],
+                [p.switchLeft.x, p.pHead.y],
+                [p.switchLeft.x, p.switchLeft.y]
+            ], '#d8b35f', Math.abs(state.primaryCurrent) * 0.38);
+
+            drawWire([
+                [p.switchRight.x, p.switchRight.y],
+                [priX - 36, p.switchRight.y],
+                [priX - 36, priY + 2],
+                [priX - 8, priY + 2]
+            ], '#d8b35f', Math.abs(state.primaryCurrent) * 0.38);
+
+            drawWire([
+                [priX - 8, priY + priH - 2],
+                [p.nHead.x, priY + priH - 2],
+                [p.nHead.x, p.nHead.y]
+            ], '#d8b35f', Math.abs(state.primaryCurrent) * 0.38);
+
+            drawWire([
+                [secX + 38, secY + 8],
+                [W * 0.73, secY + 8],
+                [W * 0.73, g.top.y],
+                [g.top.x, g.top.y]
+            ], '#8ec8f2', Math.abs(state.needle) * 0.45);
+
+            drawWire([
+                [secX + 38, secY + secH - 8],
+                [W * 0.73, secY + secH - 8],
+                [W * 0.73, g.bottom.y],
+                [g.bottom.x, g.bottom.y]
+            ], '#8ec8f2', Math.abs(state.needle) * 0.45);
+
+            ctx.fillStyle = '#ffaa44';
+            ctx.font = 'bold 13px Arial';
+            ctx.textAlign = 'right';
+            ctx.fillText('غلق/فتح المفتاح يولد انحرافًا لحظيًا فقط، ثم يعود المؤشر للصفر عند ثبات التيار', W - 16, 16);
+        }
+
+        function canvasPoint(e) {
+            const rect = canvas.getBoundingClientRect();
+            const sx = canvas.width / rect.width;
+            const sy = canvas.height / rect.height;
+            return {
+                x: (e.clientX - rect.left) * sx,
+                y: (e.clientY - rect.top) * sy
+            };
+        }
+
+        function startDrag(e) {
+            const p = canvasPoint(e);
+            const mode = modeSelect.value;
+
+            if (mode === 'magnet') {
+                const L = getMagnetLayout();
+                const hw = L.magnetW / 2;
+                const hh = L.magnetH / 2;
+                if (Math.abs(p.x - L.coilX) <= hw && Math.abs(p.y - state.magnetY) <= hh) {
+                    state.dragging = 'magnet';
+                    state.dragOffsetY = p.y - state.magnetY;
+                }
+            } else if (mode === 'moveCoil') {
+                const L = getMoveCoilLayout();
+                const centerY = state.movingCoilY + L.priH * 0.5;
+                if (Math.abs(p.x - L.priX) <= L.priR + 12 && Math.abs(p.y - centerY) <= L.priH * 0.5 + 10) {
+                    state.dragging = 'primaryCoil';
+                    state.dragOffsetY = p.y - state.movingCoilY;
+                }
+            }
+
+            if (state.dragging) {
+                canvas.classList.add('dragging');
+                canvas.setPointerCapture(e.pointerId);
+            }
+        }
+
+        function moveDrag(e) {
+            if (!state.dragging) return;
+            const p = canvasPoint(e);
+
+            if (state.dragging === 'magnet') {
+                const L = getMagnetLayout();
+                state.magnetY = clamp(p.y - state.dragOffsetY, L.minMagnetY, L.maxMagnetY);
+            } else if (state.dragging === 'primaryCoil') {
+                const L = getMoveCoilLayout();
+                state.movingCoilY = clamp(p.y - state.dragOffsetY, L.minPriY, L.maxPriY);
+            }
+        }
+
+        function endDrag(e) {
+            if (!state.dragging) return;
+            state.dragging = null;
+            canvas.classList.remove('dragging');
+            if (typeof e.pointerId === 'number') {
+                canvas.releasePointerCapture(e.pointerId);
+            }
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, W, H);
+            drawGrid();
+
+            const mode = modeSelect.value;
+            if (mode === 'magnet') {
+                drawModeMagnet();
+            } else if (mode === 'moveCoil') {
+                drawModeMoveCoil();
+            } else {
+                drawModeSwitchPulse();
+            }
+        }
+
+        function syncSwitchButton() {
+            switchBtn.textContent = state.switchClosed ? 'فتح المفتاح' : 'إغلاق المفتاح';
+            switchBtn.classList.toggle('switch-on', state.switchClosed);
+        }
+
+        function loop() {
+            updateModel();
+            draw();
+            requestAnimationFrame(loop);
+        }
+
+        modeSelect.addEventListener('change', () => {
+            state.prevFlux = 0;
+            state.flux = 0;
+            state.dFlux = 0;
+            state.emf = 0;
+            state.needle = 0;
+            state.primaryCurrent = 0;
+            state.prevPrimaryCurrent = 0;
+        });
+
+        canvas.addEventListener('pointerdown', startDrag);
+        canvas.addEventListener('pointermove', moveDrag);
+        canvas.addEventListener('pointerup', endDrag);
+        canvas.addEventListener('pointercancel', endDrag);
+        canvas.addEventListener('pointerleave', endDrag);
+
+        switchBtn.addEventListener('click', () => {
+            state.switchClosed = !state.switchClosed;
+            syncSwitchButton();
+        });
+
+        resetBtn.addEventListener('click', () => {
+            state.flux = 0;
+            state.prevFlux = 0;
+            state.dFlux = 0;
+            state.emf = 0;
+            state.needle = 0;
+            state.switchClosed = false;
+            state.primaryCurrent = 0;
+            state.prevPrimaryCurrent = 0;
+            state.movingCoilY = H * 0.12;
+            state.magnetY = H * 0.29;
+            syncSwitchButton();
+        });
+
+        syncSwitchButton();
+        loop();
+    </script>
+</body>
+
+</html>

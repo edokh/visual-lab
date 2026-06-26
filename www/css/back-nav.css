@@ -1,0 +1,38 @@
+.vl-back {
+  position: fixed;
+  top: 14px;
+  left: 14px;
+  z-index: 1000001;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  background: rgba(255, 255, 255, 0.92);
+  border: 2px solid #8bc3dc;
+  border-radius: 999px;
+  color: #0f2742;
+  font-family: "Tahoma", Arial, sans-serif;
+  font-size: 18px;
+  font-weight: bold;
+  text-decoration: none;
+  box-shadow: 0 4px 14px rgba(15, 39, 66, 0.18);
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.vl-back:hover,
+.vl-back:focus {
+  background: #ffffff;
+  transform: scale(1.03);
+  outline: none;
+}
+
+.vl-back:active {
+  transform: scale(0.98);
+}
+
+.vl-back__icon {
+  font-size: 22px;
+  line-height: 1;
+  color: #2563eb;
+}

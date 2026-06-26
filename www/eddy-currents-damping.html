@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>تجربة التيارات الدوامية وتخميد الاهتزاز</title>
+    <link rel="stylesheet" href="css/back-nav.css" />
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #0f0f1a;
+            color: #e0e0e0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 0;
+            margin: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        h1 {
+            font-size: 1.2rem;
+            margin: 0 0 8px 0;
+            color: #88ccff;
+            flex-shrink: 0;
+        }
+
+        .lab-container {
+            background: #1a1a2e;
+            border-radius: 0;
+            padding: 15px;
+            box-shadow: none;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            flex: 1;
+            background: #111122;
+            border-radius: 0;
+            border: 1px solid #2a2a4a;
+            min-height: 0;
+        }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px 20px;
+            margin-top: 8px;
+            align-items: center;
+            background: #141428;
+            padding: 10px 12px;
+            border-radius: 0;
+            border: 1px solid #2a2a4a;
+            flex-shrink: 0;
+            font-size: 0.75rem;
+        }
+
+        .controls label {
+            font-size: 0.85rem;
+            color: #aaa;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .controls input[type="range"] {
+            width: 110px;
+            accent-color: #4a8cff;
+        }
+
+        .controls select {
+            background: #1e1e3a;
+            color: #e0e0e0;
+            border: 1px solid #3a3a5a;
+            border-radius: 6px;
+            padding: 4px 8px;
+        }
+
+        .btn {
+            background: #2a4a8a;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 6px 16px;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            background: #3a6aaa;
+        }
+
+        .btn.reset {
+            background: #6a2a3a;
+        }
+
+        .btn.reset:hover {
+            background: #8a3a5a;
+        }
+
+        .btn.play {
+            background: #2f7a4b;
+        }
+
+        .btn.play:hover {
+            background: #399a5f;
+        }
+
+        .info {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px 24px;
+            margin-top: 6px;
+            font-size: 0.7rem;
+            color: #99aacc;
+            flex-shrink: 0;
+        }
+
+        .info span {
+            background: #1a1a30;
+            padding: 4px 12px;
+            border-radius: 6px;
+        }
+
+        .info .val {
+            color: #88ddff;
+            font-weight: 600;
+        }
+
+        .legend {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            font-size: 0.7rem;
+            margin-top: 4px;
+            flex-shrink: 0;
+        }
+
+        .legend-dot {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 4px;
+            vertical-align: middle;
+        }
+    </style>
+</head>
+
+<body>
+    <a class="vl-back" href="index.html" aria-label="العودة">
+        <span class="vl-back__icon">&#8592;</span>
+        <span>رجوع</span>
+    </a>
+
+    <div class="lab-container">
+        <h1>🧲 نشاط 2: التيارات الدوامية وتخميد البندول</h1>
+        <canvas id="eddyCanvas" width="1000" height="600"></canvas>
+
+        <div class="controls">
+            <label>نوع الصفيحة:
+                <select id="plateType">
+                    <option value="solid">كاملة (غير مشقوقة)</option>
+                    <option value="slotted">مشقوقة</option>
+                </select>
+            </label>
+
+            <label>شدة المجال B
+                <input type="range" id="bField" min="20" max="250" value="140">
+            </label>
+
+            <label>زاوية البداية
+                <input type="range" id="startAngle" min="5" max="35" value="22">
+            </label>
+
+            <label>كتلة الصفيحة
+                <input type="range" id="mass" min="1" max="10" value="4">
+            </label>
+
+            <button class="btn play" id="releaseBtn">إطلاق البندول</button>
+            <button class="btn reset" id="resetBtn">إعادة تعيين</button>
+        </div>
+
+        <div class="info">
+            <span>الزاوية θ: <span class="val" id="angleVal">0.00</span>°</span>
+            <span>السرعة الزاوية ω: <span class="val" id="omegaVal">0.00</span> rad/s</span>
+            <span>شدة التيارات الدوامية: <span class="val" id="eddyVal">0.000</span></span>
+            <span>قوة الكبح المغناطيسي: <span class="val" id="brakeVal">0.000</span></span>
+            <span>سعة الاهتزاز الحالية: <span class="val" id="ampVal">0.00</span>°</span>
+        </div>
+
+        <div class="legend">
+            <span><span class="legend-dot" style="background:#ffd166;"></span> صفيحة البندول</span>
+            <span><span class="legend-dot" style="background:#8ec8f2;"></span> قطبا المغناطيس</span>
+            <span><span class="legend-dot" style="background:#88ff88;"></span> تأثير الكبح</span>
+            <span style="color:#ffaa44;">الصفيحة الكاملة تتوقف أسرع من المشقوقة داخل المجال</span>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('eddyCanvas');
+        const ctx = canvas.getContext('2d');
+        const W = canvas.width;
+        const H = canvas.height;
+
+        const plateTypeEl = document.getElementById('plateType');
+        const bFieldEl = document.getElementById('bField');
+        const startAngleEl = document.getElementById('startAngle');
+        const massEl = document.getElementById('mass');
+        const releaseBtn = document.getElementById('releaseBtn');
+        const resetBtn = document.getElementById('resetBtn');
+
+        const angleVal = document.getElementById('angleVal');
+        const omegaVal = document.getElementById('omegaVal');
+        const eddyVal = document.getElementById('eddyVal');
+        const brakeVal = document.getElementById('brakeVal');
+        const ampVal = document.getElementById('ampVal');
+
+        const state = {
+            theta: 0,
+            omega: 0,
+            released: false,
+            maxAbsTheta: 0,
+            eddyStrength: 0,
+            brakeForce: 0
+        };
+
+        const DT = 1 / 60;
+
+        function clamp(v, min, max) {
+            return Math.max(min, Math.min(max, v));
+        }
+
+        function drawGrid() {
+            ctx.strokeStyle = '#1a1a30';
+            ctx.lineWidth = 0.5;
+            for (let x = 0; x <= W; x += 50) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, H);
+                ctx.stroke();
+            }
+            for (let y = 0; y <= H; y += 50) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(W, y);
+                ctx.stroke();
+            }
+        }
+
+        function drawArrow(x1, y1, x2, y2, color, width) {
+            const dx = x2 - x1;
+            const dy = y2 - y1;
+            const len = Math.sqrt(dx * dx + dy * dy);
+            if (len < 1) return;
+            const ux = dx / len;
+            const uy = dy / len;
+            const head = 9;
+            const hw = 5;
+
+            ctx.strokeStyle = color;
+            ctx.lineWidth = width;
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.stroke();
+
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.moveTo(x2, y2);
+            ctx.lineTo(x2 - ux * head + uy * hw, y2 - uy * head - ux * hw);
+            ctx.lineTo(x2 - ux * head - uy * hw, y2 - uy * head + ux * hw);
+            ctx.closePath();
+            ctx.fill();
+        }
+
+        function drawMagnetPole(x, y, w, h, label) {
+            ctx.fillStyle = '#8ec8f2';
+            ctx.fillRect(x, y, w, h);
+            ctx.strokeStyle = '#b7ddff';
+            ctx.lineWidth = 1.4;
+            ctx.strokeRect(x, y, w, h);
+            ctx.fillStyle = '#1f2a3a';
+            ctx.font = 'bold 14px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(label, x + w / 2, y + h / 2);
+        }
+
+        function drawPlate(px, py, angle, type) {
+            const w = 84;
+            const h = 56;
+            ctx.save();
+            ctx.translate(px, py);
+            ctx.rotate(angle);
+
+            ctx.fillStyle = '#e9cfac';
+            ctx.fillRect(-w / 2, -h / 2, w, h);
+            ctx.strokeStyle = '#f8e9d8';
+            ctx.lineWidth = 1.2;
+            ctx.strokeRect(-w / 2, -h / 2, w, h);
+
+            if (type === 'slotted') {
+                ctx.fillStyle = '#111122';
+                ctx.fillRect(-5, -h / 2 + 6, 10, h - 12);
+                ctx.fillRect(-w / 2 + 16, -h / 2 + 16, w - 32, 6);
+            }
+
+            ctx.restore();
+        }
+
+        function updatePhysics() {
+            const B = parseFloat(bFieldEl.value) / 100;
+            const mass = parseFloat(massEl.value);
+            const plateType = plateTypeEl.value;
+
+            const L = 230;
+            const gOverL = 2.8;
+            const baseDamping = 0.035;
+
+            const bobX = W * 0.5 + Math.sin(state.theta) * L;
+            const bobY = 120 + Math.cos(state.theta) * L;
+
+            const inField = bobX > W * 0.5 - 84 && bobX < W * 0.5 + 84 && bobY > 250 && bobY < 370;
+            const plateFactor = plateType === 'solid' ? 1.0 : 0.22;
+            const magneticDamping = inField ? (B * 0.22 * plateFactor) / mass : 0;
+
+            const alpha = -gOverL * Math.sin(state.theta) - (baseDamping + magneticDamping) * state.omega;
+
+            if (state.released) {
+                state.omega += alpha * DT;
+                state.theta += state.omega * DT;
+            }
+
+            state.maxAbsTheta = Math.max(state.maxAbsTheta * 0.999, Math.abs(state.theta));
+            state.eddyStrength = Math.abs(state.omega) * magneticDamping * 3.2;
+            state.brakeForce = Math.abs(state.omega) * magneticDamping * 1.7;
+
+            angleVal.textContent = (state.theta * 180 / Math.PI).toFixed(2);
+            omegaVal.textContent = state.omega.toFixed(2);
+            eddyVal.textContent = state.eddyStrength.toFixed(3);
+            brakeVal.textContent = state.brakeForce.toFixed(3);
+            ampVal.textContent = (state.maxAbsTheta * 180 / Math.PI).toFixed(2);
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, W, H);
+            drawGrid();
+
+            const pivotX = W * 0.5;
+            const pivotY = 120;
+            const L = 230;
+            const plateType = plateTypeEl.value;
+
+            const bobX = pivotX + Math.sin(state.theta) * L;
+            const bobY = pivotY + Math.cos(state.theta) * L;
+
+            const poleTopY = 250;
+            const poleBottomY = 306;
+            drawMagnetPole(pivotX - 105, poleTopY, 40, 56, 'N');
+            drawMagnetPole(pivotX + 65, poleTopY, 40, 56, 'S');
+
+            ctx.fillStyle = 'rgba(120,190,255,0.09)';
+            ctx.fillRect(pivotX - 65, poleTopY, 130, poleBottomY - poleTopY);
+            ctx.strokeStyle = 'rgba(120,190,255,0.4)';
+            ctx.strokeRect(pivotX - 65, poleTopY, 130, poleBottomY - poleTopY);
+
+            ctx.strokeStyle = '#c9d6df';
+            ctx.lineWidth = 2.6;
+            ctx.beginPath();
+            ctx.moveTo(pivotX, pivotY);
+            ctx.lineTo(bobX, bobY);
+            ctx.stroke();
+
+            ctx.fillStyle = '#c9d6df';
+            ctx.beginPath();
+            ctx.arc(pivotX, pivotY, 6, 0, Math.PI * 2);
+            ctx.fill();
+
+            drawPlate(bobX, bobY, state.theta, plateType);
+
+            const inField = bobX > pivotX - 65 && bobX < pivotX + 65 && bobY > poleTopY && bobY < poleBottomY;
+            if (inField) {
+                const col = 'rgba(136,255,136,0.85)';
+                drawArrow(bobX + 48, bobY, bobX + 8, bobY, col, 2.3);
+                ctx.fillStyle = col;
+                ctx.font = 'bold 12px Arial';
+                ctx.textAlign = 'left';
+                ctx.fillText('F_B', bobX + 52, bobY - 8);
+            }
+
+            const dir = state.omega > 0 ? 'اتجاه الحركة: يمين' : (state.omega < 0 ? 'اتجاه الحركة: يسار' : 'اتجاه الحركة: سكون');
+            ctx.fillStyle = '#ffaa44';
+            ctx.font = 'bold 13px Arial';
+            ctx.textAlign = 'right';
+            ctx.fillText(dir, W - 16, 16);
+            ctx.fillText('داخل الفجوة المغناطيسية تتولد تيارات دوامية تعاكس الحركة (قانون لنز)', W - 16, 36);
+
+            const boxX = 655;
+            const boxY = 84;
+            const boxW = 300;
+            const boxH = 122;
+            ctx.fillStyle = 'rgba(20,20,40,0.9)';
+            ctx.strokeStyle = '#2f4366';
+            ctx.lineWidth = 1.2;
+            ctx.fillRect(boxX, boxY, boxW, boxH);
+            ctx.strokeRect(boxX, boxY, boxW, boxH);
+
+            ctx.fillStyle = '#88ccff';
+            ctx.font = 'bold 14px Arial';
+            ctx.textAlign = 'right';
+            ctx.fillText('مقارنة نوع الصفيحة', boxX + boxW - 12, boxY + 24);
+            ctx.fillStyle = '#ffd166';
+            ctx.fillText('الكاملة: تيارات دوامية أكبر -> تخميد أسرع', boxX + boxW - 12, boxY + 50);
+            ctx.fillStyle = '#b7ddff';
+            ctx.fillText('المشقوقة: مسارات التيار مقطوعة -> تخميد أضعف', boxX + boxW - 12, boxY + 74);
+            ctx.fillStyle = '#88ff88';
+            ctx.fillText(`الحالة الحالية: ${plateType === 'solid' ? 'كاملة' : 'مشقوقة'}`, boxX + boxW - 12, boxY + 98);
+        }
+
+        function resetState() {
+            const a = parseFloat(startAngleEl.value) * Math.PI / 180;
+            state.theta = a;
+            state.omega = 0;
+            state.released = false;
+            state.maxAbsTheta = Math.abs(a);
+            state.eddyStrength = 0;
+            state.brakeForce = 0;
+            releaseBtn.textContent = 'إطلاق البندول';
+        }
+
+        releaseBtn.addEventListener('click', () => {
+            state.released = !state.released;
+            releaseBtn.textContent = state.released ? 'إيقاف مؤقت' : 'إطلاق البندول';
+        });
+
+        resetBtn.addEventListener('click', resetState);
+        startAngleEl.addEventListener('input', () => {
+            if (!state.released) {
+                resetState();
+            }
+        });
+
+        function loop() {
+            updatePhysics();
+            draw();
+            requestAnimationFrame(loop);
+        }
+
+        resetState();
+        loop();
+    </script>
+</body>
+
+</html>

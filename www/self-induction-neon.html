@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>تجربة الحث الذاتي ووميض مصباح النيون</title>
+    <link rel="stylesheet" href="css/back-nav.css" />
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #0f0f1a;
+            color: #e0e0e0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 0;
+            margin: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        h1 {
+            font-size: 1.2rem;
+            margin: 0 0 8px 0;
+            color: #88ccff;
+            flex-shrink: 0;
+        }
+
+        .lab-container {
+            background: #1a1a2e;
+            border-radius: 0;
+            padding: 15px;
+            box-shadow: none;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            flex: 1;
+            background: #111122;
+            border-radius: 0;
+            border: 1px solid #2a2a4a;
+            min-height: 0;
+        }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px 20px;
+            margin-top: 8px;
+            align-items: center;
+            background: #141428;
+            padding: 10px 12px;
+            border-radius: 0;
+            border: 1px solid #2a2a4a;
+            flex-shrink: 0;
+            font-size: 0.75rem;
+        }
+
+        .controls label {
+            font-size: 0.85rem;
+            color: #aaa;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .controls input[type="range"] {
+            width: 110px;
+            accent-color: #4a8cff;
+        }
+
+        .btn {
+            background: #2a4a8a;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 6px 16px;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            background: #3a6aaa;
+        }
+
+        .btn.switch-on {
+            background: #2f7a4b;
+        }
+
+        .btn.switch-on:hover {
+            background: #399a5f;
+        }
+
+        .btn.reset {
+            background: #6a2a3a;
+        }
+
+        .btn.reset:hover {
+            background: #8a3a5a;
+        }
+
+        .info {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px 24px;
+            margin-top: 6px;
+            font-size: 0.7rem;
+            color: #99aacc;
+            flex-shrink: 0;
+        }
+
+        .info span {
+            background: #1a1a30;
+            padding: 4px 12px;
+            border-radius: 6px;
+        }
+
+        @media (max-width: 900px) {
+            .info {
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 620px) {
+            .info {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .info .val {
+            color: #88ddff;
+            font-weight: 600;
+        }
+
+        .legend {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            font-size: 0.7rem;
+            margin-top: 4px;
+            flex-shrink: 0;
+        }
+
+        .legend-dot {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 4px;
+            vertical-align: middle;
+        }
+    </style>
+</head>
+
+<body>
+    <a class="vl-back" href="index.html" aria-label="العودة">
+        <span class="vl-back__icon">&#8592;</span>
+        <span>رجوع</span>
+    </a>
+
+    <div class="lab-container">
+        <h1>⚡ نشاط 3: الحث الذاتي ووميض مصباح النيون</h1>
+        <canvas id="selfCanvas" width="1000" height="600"></canvas>
+
+        <div class="controls">
+            <label>فولتية البطارية
+                <input type="range" id="batteryV" min="3" max="24" value="9">
+            </label>
+
+            <label>محاثة الملف L (mH)
+                <input type="range" id="inductance" min="20" max="500" value="220">
+            </label>
+
+            <label>مقاومة الملف R (Ω)
+                <input type="range" id="coilR" min="1" max="50" value="12">
+            </label>
+
+            <label>جهد إشعال النيون
+                <input type="range" id="strikeV" min="20" max="120" value="70">
+            </label>
+
+            <button class="btn" id="switchBtn">إغلاق المفتاح</button>
+            <button class="btn reset" id="resetBtn">إعادة تعيين</button>
+        </div>
+
+        <div class="info">
+            <span>حالة المفتاح: <span class="val" id="swVal">مفتوح</span></span>
+            <span>تيار الملف I: <span class="val" id="iVal">0.000</span> A</span>
+            <span>dI/dt: <span class="val" id="didtVal">0.000</span> A/s</span>
+            <span>جهد الحث |V<sub>L</sub>|: <span class="val" id="vlVal">0.0</span> V</span>
+            <span>حالة النيون: <span class="val" id="lampVal">مطفأ</span></span>
+            <span>طاقة الملف 1/2LI²: <span class="val" id="eVal">0.000</span> J</span>
+        </div>
+
+        <div class="legend">
+            <span><span class="legend-dot" style="background:#ffd166;"></span> بطارية ومفتاح</span>
+            <span><span class="legend-dot" style="background:#8ec8f2;"></span> ملف حث</span>
+            <span><span class="legend-dot" style="background:#ffb3e6;"></span> مصباح نيون</span>
+            <span style="color:#ffaa44;">النيون يومض غالبا عند فتح المفتاح بسبب نبضة جهد حث ذاتي عالية</span>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('selfCanvas');
+        const ctx = canvas.getContext('2d');
+        const W = canvas.width;
+        const H = canvas.height;
+
+        const batteryVEl = document.getElementById('batteryV');
+        const inductanceEl = document.getElementById('inductance');
+        const coilREl = document.getElementById('coilR');
+        const strikeVEl = document.getElementById('strikeV');
+        const switchBtn = document.getElementById('switchBtn');
+        const resetBtn = document.getElementById('resetBtn');
+
+        const swVal = document.getElementById('swVal');
+        const iVal = document.getElementById('iVal');
+        const didtVal = document.getElementById('didtVal');
+        const vlVal = document.getElementById('vlVal');
+        const lampVal = document.getElementById('lampVal');
+        const eVal = document.getElementById('eVal');
+
+        const state = {
+            switchClosed: false,
+            i: 0,
+            prevI: 0,
+            didt: 0,
+            vL: 0,
+            neonOn: false,
+            neonGlow: 0
+        };
+
+        const DT = 1 / 60;
+
+        function clamp(v, min, max) {
+            return Math.max(min, Math.min(max, v));
+        }
+
+        function roundRect(x, y, w, h, r) {
+            const rr = Math.min(r, w / 2, h / 2);
+            ctx.beginPath();
+            ctx.moveTo(x + rr, y);
+            ctx.arcTo(x + w, y, x + w, y + h, rr);
+            ctx.arcTo(x + w, y + h, x, y + h, rr);
+            ctx.arcTo(x, y + h, x, y, rr);
+            ctx.arcTo(x, y, x + w, y, rr);
+            ctx.closePath();
+        }
+
+        function drawGrid() {
+            ctx.strokeStyle = '#1a1a30';
+            ctx.lineWidth = 0.5;
+            for (let x = 0; x <= W; x += 50) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, H);
+                ctx.stroke();
+            }
+            for (let y = 0; y <= H; y += 50) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(W, y);
+                ctx.stroke();
+            }
+        }
+
+        function drawWire(points, core, glow) {
+            if (!points || points.length < 2) return;
+            ctx.lineJoin = 'round';
+            ctx.lineCap = 'round';
+
+            ctx.beginPath();
+            ctx.moveTo(points[0][0], points[0][1]);
+            for (let i = 1; i < points.length; i++) {
+                ctx.lineTo(points[i][0], points[i][1]);
+            }
+            ctx.strokeStyle = '#1e2430';
+            ctx.lineWidth = 7;
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(points[0][0], points[0][1]);
+            for (let i = 1; i < points.length; i++) {
+                ctx.lineTo(points[i][0], points[i][1]);
+            }
+            ctx.strokeStyle = core;
+            ctx.lineWidth = 3.5;
+            ctx.stroke();
+
+            if (glow > 0.01) {
+                ctx.save();
+                ctx.beginPath();
+                ctx.moveTo(points[0][0], points[0][1]);
+                for (let i = 1; i < points.length; i++) {
+                    ctx.lineTo(points[i][0], points[i][1]);
+                }
+                ctx.strokeStyle = `rgba(255,228,140,${clamp(glow, 0, 0.8)})`;
+                ctx.lineWidth = 2;
+                ctx.shadowColor = `rgba(255,210,120,${clamp(glow + 0.1, 0, 0.9)})`;
+                ctx.shadowBlur = 8;
+                ctx.stroke();
+                ctx.restore();
+            }
+        }
+
+        function drawBattery(x, y) {
+            // Draw a symbolic vertical battery (two cells) to match textbook schematics.
+            ctx.strokeStyle = '#d6dde7';
+            ctx.lineWidth = 2.2;
+
+            ctx.beginPath();
+            ctx.moveTo(x - 20, y - 62);
+            ctx.lineTo(x + 20, y - 62);
+            ctx.moveTo(x - 12, y - 42);
+            ctx.lineTo(x + 12, y - 42);
+            ctx.moveTo(x - 20, y - 14);
+            ctx.lineTo(x + 20, y - 14);
+            ctx.moveTo(x - 12, y + 6);
+            ctx.lineTo(x + 12, y + 6);
+            ctx.stroke();
+
+            const w = 66;
+            const h = 128;
+            const bodyGrad = ctx.createLinearGradient(x - w / 2, y - h / 2, x + w / 2, y + h / 2);
+            bodyGrad.addColorStop(0, '#e8c69e');
+            bodyGrad.addColorStop(0.5, '#d9a96f');
+            bodyGrad.addColorStop(1, '#b97847');
+
+            ctx.save();
+            ctx.shadowColor = 'rgba(0,0,0,0.35)';
+            ctx.shadowBlur = 10;
+            ctx.shadowOffsetY = 4;
+            roundRect(x - w / 2, y - h / 2, w, h, 12);
+            ctx.fillStyle = bodyGrad;
+            ctx.fill();
+            ctx.restore();
+            ctx.strokeStyle = '#8f6a49';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            // Dark lower sleeve and a subtle highlight to feel more like a real battery cell.
+            roundRect(x - w / 2 + 4, y - h / 2 + 8, w - 8, h - 18, 10);
+            ctx.fillStyle = 'rgba(31,44,60,0.55)';
+            ctx.fill();
+            ctx.fillStyle = 'rgba(255,255,255,0.12)';
+            roundRect(x - w / 2 + 6, y - h / 2 + 6, 10, h - 12, 5);
+            ctx.fill();
+
+            ctx.fillStyle = '#dfe8f2';
+            ctx.beginPath();
+            ctx.arc(x, y - h / 2 + 6, 10, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#7e8ea0';
+            ctx.lineWidth = 1.2;
+            ctx.stroke();
+
+            ctx.fillStyle = '#ff6b6b';
+            ctx.font = 'bold 30px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('+', x, y - 16);
+
+            ctx.fillStyle = '#88ddff';
+            ctx.font = 'bold 13px Arial';
+            ctx.fillText(`${parseFloat(batteryVEl.value).toFixed(0)}V`, x, y + 30);
+
+            return {
+                top: { x, y: y - h / 2 + 2 },
+                bottom: { x, y: y + h / 2 - 4 }
+            };
+        }
+
+        function drawSwitch(x, y) {
+            ctx.fillStyle = '#d6dde7';
+            ctx.beginPath();
+            ctx.arc(x - 10, y, 4, 0, Math.PI * 2);
+            ctx.arc(x + 34, y, 4, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.strokeStyle = '#d7dde5';
+            ctx.lineWidth = 3.2;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(x - 10, y);
+            if (state.switchClosed) {
+                ctx.lineTo(x + 34, y);
+            } else {
+                ctx.lineTo(x + 22, y - 15);
+            }
+            ctx.stroke();
+
+            return {
+                left: { x: x - 10, y },
+                right: { x: x + 34, y }
+            };
+        }
+
+        function drawInductor(x, y) {
+            // Draw a vertical inductor symbol like the figure.
+            const turns = 6;
+            const turnH = 26;
+            const startY = y - ((turns * turnH) / 2);
+
+            ctx.strokeStyle = '#d6dde7';
+            ctx.lineWidth = 2.2;
+            for (let i = 0; i < turns; i++) {
+                const cy = startY + i * turnH + turnH / 2;
+                ctx.beginPath();
+                ctx.ellipse(x, cy, 11, turnH / 2 - 1, 0, -Math.PI / 2, Math.PI / 2);
+                ctx.stroke();
+            }
+
+            ctx.fillStyle = '#9fb4cd';
+            ctx.font = '12px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('ملف', x + 34, y);
+
+            return {
+                top: { x, y: startY },
+                bottom: { x, y: startY + turns * turnH }
+            };
+        }
+
+        function drawNeonLamp(x, y, glow) {
+            const g = clamp(glow, 0, 1);
+            if (g > 0.01) {
+                const rg = ctx.createRadialGradient(x, y, 4, x, y, 36);
+                rg.addColorStop(0, `rgba(255,180,235,${0.35 + g * 0.5})`);
+                rg.addColorStop(1, 'rgba(255,180,235,0)');
+                ctx.fillStyle = rg;
+                ctx.beginPath();
+                ctx.arc(x, y, 36, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            ctx.fillStyle = '#d4dce4';
+            ctx.beginPath();
+            ctx.arc(x, y, 24, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#7f8fa1';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            ctx.fillStyle = `rgba(255,130,220,${0.25 + g * 0.75})`;
+            ctx.beginPath();
+            ctx.arc(x - 8, y, 6, 0, Math.PI * 2);
+            ctx.arc(x + 8, y, 6, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#ffb3e6';
+            ctx.font = '12px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('نيون', x, y + 32);
+
+            return {
+                top: { x, y: y - 24 },
+                bottom: { x, y: y + 24 }
+            };
+        }
+
+        function updateModel() {
+            const Vb = parseFloat(batteryVEl.value);
+            const L = parseFloat(inductanceEl.value) / 1000;
+            const R = parseFloat(coilREl.value);
+            const Vstrike = parseFloat(strikeVEl.value);
+
+            if (state.switchClosed) {
+                const targetI = Vb / R;
+                const tau = L / R;
+                const a = 1 - Math.exp(-DT / Math.max(tau, 0.002));
+                state.i += (targetI - state.i) * a;
+            } else {
+                const naturalDidt = -state.i * R / Math.max(L, 0.0001);
+                const naturalVL = Math.abs(L * naturalDidt);
+
+                if (naturalVL >= Vstrike && Math.abs(state.i) > 0.0001) {
+                    const signedDidt = state.i > 0 ? -Vstrike / Math.max(L, 0.0001) : Vstrike / Math.max(L, 0.0001);
+                    state.i += signedDidt * DT;
+                    state.neonOn = true;
+                } else {
+                    const decayR = R * 0.45;
+                    const didt = -state.i * decayR / Math.max(L, 0.0001);
+                    state.i += didt * DT;
+                    state.neonOn = false;
+                }
+
+                if (Math.abs(state.i) < 0.00005) {
+                    state.i = 0;
+                    state.neonOn = false;
+                }
+            }
+
+            state.didt = (state.i - state.prevI) / DT;
+            state.vL = -L * state.didt;
+            state.prevI = state.i;
+
+            const lampTarget = state.neonOn ? 1 : 0;
+            state.neonGlow += (lampTarget - state.neonGlow) * 0.35;
+            if (!state.neonOn) state.neonGlow *= 0.9;
+
+            swVal.textContent = state.switchClosed ? 'مغلق' : 'مفتوح';
+            iVal.textContent = state.i.toFixed(3);
+            didtVal.textContent = state.didt.toFixed(3);
+            vlVal.textContent = Math.abs(state.vL).toFixed(1);
+            lampVal.textContent = state.neonGlow > 0.08 ? 'مضيء' : 'مطفأ';
+            eVal.textContent = (0.5 * L * state.i * state.i).toFixed(3);
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, W, H);
+            drawGrid();
+
+            const battery = drawBattery(120, 300);
+            const sw = drawSwitch(330, 150);
+            const inductor = drawInductor(640, 300);
+            const neon = drawNeonLamp(815, 300, state.neonGlow);
+
+            const lineGlow = clamp(Math.abs(state.i) * 2.2, 0, 0.6);
+            const pinkGlow = clamp(state.neonGlow * 0.8, 0, 0.8);
+
+            drawWire([
+                [battery.top.x, battery.top.y],
+                [sw.left.x, battery.top.y],
+                [sw.left.x, sw.left.y]
+            ], '#d8b35f', lineGlow);
+
+            drawWire([
+                [sw.right.x, sw.right.y],
+                [inductor.top.x, sw.right.y],
+                [inductor.top.x, inductor.top.y]
+            ], '#d8b35f', lineGlow);
+
+            drawWire([
+                [inductor.bottom.x, inductor.bottom.y],
+                [battery.bottom.x, inductor.bottom.y],
+                [battery.bottom.x, battery.bottom.y]
+            ], '#d8b35f', lineGlow);
+
+            // Neon lamp branch in parallel with inductor.
+            drawWire([
+                [inductor.top.x, inductor.top.y],
+                [neon.top.x, inductor.top.y],
+                [neon.top.x, neon.top.y]
+            ], '#9fcdf0', pinkGlow);
+
+            drawWire([
+                [inductor.bottom.x, inductor.bottom.y],
+                [neon.bottom.x, inductor.bottom.y],
+                [neon.bottom.x, neon.bottom.y]
+            ], '#9fcdf0', pinkGlow);
+
+            // Connection nodes as in textbook style.
+            ctx.fillStyle = '#d6dde7';
+            ctx.beginPath();
+            ctx.arc(inductor.top.x, inductor.top.y, 4, 0, Math.PI * 2);
+            ctx.arc(inductor.bottom.x, inductor.bottom.y, 4, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#ffaa44';
+            ctx.font = 'bold 13px Arial';
+            ctx.textAlign = 'right';
+            ctx.fillText('عند غلق المفتاح: تيار الملف يزداد تدريجيا ولا يكفي عادة لإضاءة النيون', W - 16, 18);
+            ctx.fillText('عند فتح المفتاح: انهيار التيار يولد |V_L| كبيرا فيومض النيون لزمن قصير', W - 16, 38);
+
+            const boxX = 655;
+            const boxY = 80;
+            const boxW = 300;
+            const boxH = 120;
+            ctx.fillStyle = 'rgba(20,20,40,0.9)';
+            ctx.strokeStyle = '#2f4366';
+            ctx.lineWidth = 1.2;
+            ctx.fillRect(boxX, boxY, boxW, boxH);
+            ctx.strokeRect(boxX, boxY, boxW, boxH);
+
+            ctx.fillStyle = '#88ccff';
+            ctx.font = 'bold 14px Arial';
+            ctx.textAlign = 'right';
+            ctx.fillText('العلاقات المستخدمة', boxX + boxW - 12, boxY + 24);
+            ctx.fillStyle = '#ffaa44';
+            ctx.fillText('V_L = -L (dI/dt)', boxX + boxW - 12, boxY + 50);
+            ctx.fillStyle = '#b7ddff';
+            ctx.fillText('E_stored = 1/2 L I²', boxX + boxW - 12, boxY + 74);
+            ctx.fillStyle = '#ffb3e6';
+            ctx.fillText('|V_L| > V_strike  =>  Flash', boxX + boxW - 12, boxY + 98);
+        }
+
+        function syncSwitchBtn() {
+            switchBtn.textContent = state.switchClosed ? 'فتح المفتاح' : 'إغلاق المفتاح';
+            switchBtn.classList.toggle('switch-on', state.switchClosed);
+        }
+
+        switchBtn.addEventListener('click', () => {
+            state.switchClosed = !state.switchClosed;
+            syncSwitchBtn();
+        });
+
+        resetBtn.addEventListener('click', () => {
+            batteryVEl.value = '9';
+            inductanceEl.value = '220';
+            coilREl.value = '12';
+            strikeVEl.value = '70';
+            state.switchClosed = false;
+            state.i = 0;
+            state.prevI = 0;
+            state.didt = 0;
+            state.vL = 0;
+            state.neonOn = false;
+            state.neonGlow = 0;
+            syncSwitchBtn();
+        });
+
+        function loop() {
+            updateModel();
+            draw();
+            requestAnimationFrame(loop);
+        }
+
+        syncSwitchBtn();
+        loop();
+    </script>
+</body>
+
+</html>

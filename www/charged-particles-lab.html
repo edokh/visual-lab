@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>مختبر الجسيمات المشحونة – الحقول الكهربائية والمغناطيسية</title>
+    <link rel="stylesheet" href="css/back-nav.css" />
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #0f0f1a;
+            color: #e0e0e0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 0;
+            margin: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        h1 {
+            font-size: 1.3rem;
+            margin: 0 0 8px 0;
+            color: #88ccff;
+            flex-shrink: 0;
+        }
+
+        .lab-container {
+            background: #1a1a2e;
+            border-radius: 0;
+            padding: 15px;
+            box-shadow: none;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            flex: 1;
+            background: #111122;
+            border-radius: 0;
+            cursor: crosshair;
+            border: 1px solid #2a2a4a;
+            min-height: 0;
+        }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px 20px;
+            margin-top: 8px;
+            align-items: center;
+            background: #141428;
+            padding: 10px 12px;
+            border-radius: 0;
+            border: 1px solid #2a2a4a;
+            flex-shrink: 0;
+            font-size: 0.75rem;
+        }
+
+        .controls label {
+            font-size: 0.85rem;
+            color: #aaa;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .controls input[type="range"] {
+            width: 100px;
+            accent-color: #4a8cff;
+        }
+
+        .controls select {
+            background: #1e1e3a;
+            color: #e0e0e0;
+            border: 1px solid #3a3a5a;
+            border-radius: 6px;
+            padding: 4px 8px;
+        }
+
+        .btn {
+            background: #2a4a8a;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 6px 16px;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            background: #3a6aaa;
+        }
+
+        .btn.reset {
+            background: #6a2a3a;
+        }
+
+        .btn.reset:hover {
+            background: #8a3a5a;
+        }
+
+        .info {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px 24px;
+            margin-top: 6px;
+            font-size: 0.7rem;
+            color: #99aacc;
+            flex-shrink: 0;
+        }
+
+        .info span {
+            background: #1a1a30;
+            padding: 4px 12px;
+            border-radius: 6px;
+        }
+
+        .info .val {
+            color: #88ddff;
+            font-weight: 600;
+        }
+
+        .legend {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            font-size: 0.7rem;
+            margin-top: 4px;
+            flex-shrink: 0;
+        }
+
+        .legend-dot {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 4px;
+            vertical-align: middle;
+        }
+    </style>
+</head>
+
+<body>
+    <a class="vl-back" href="index.html" aria-label="العودة">
+        <span class="vl-back__icon">&#8592;</span>
+        <span>رجوع</span>
+    </a>
+    <div class="lab-container">
+        <h1>⚛ مختبر حركة الجسيمات المشحونة</h1>
+        <canvas id="labCanvas" width="1000" height="600"></canvas>
+
+        <div class="controls">
+            <label>الحقل:
+                <select id="fieldMode">
+                    <option value="E_parallel">E ∥ (متوازي)</option>
+                    <option value="E_perp">E ⟂ (عمودي)</option>
+                    <option value="B_parallel">B ∥ (متوازي)</option>
+                    <option value="B_perp">B ⟂ (عمودي)</option>
+                </select>
+            </label>
+
+            <label>الاتجاه:
+                <select id="fieldDirection">
+                    <option value="1">← → (يمين/خارج)</option>
+                    <option value="-1">→ ← (يسار/داخل)</option>
+                </select>
+            </label>
+
+            <label>عرض المغناطيسي:
+                <select id="magneticView">
+                    <option value="inout">داخل/خارج الصفحة</option>
+                    <option value="leftright">يسار/يمين</option>
+                </select>
+            </label>
+
+            <label>قوة الحقل
+                <input type="range" id="fieldStrength" min="0" max="200" value="80">
+            </label>
+
+            <label>سرعة الجسيم
+                <input type="range" id="particleSpeed" min="10" max="300" value="120">
+            </label>
+
+            <label>سرعة الحركة
+                <input type="range" id="animationSpeed" min="0.1" max="2" step="0.1" value="1">
+            </label>
+
+            <label>الشحنة:
+                <select id="chargeSign">
+                    <option value="1">موجبة (+)</option>
+                    <option value="-1">سالبة (−)</option>
+                </select>
+            </label>
+
+            <label>
+                <input type="checkbox" id="showTrail" checked> المسار
+            </label>
+
+            <button class="btn" id="fireBtn">▶ إطلاق</button>
+            <button class="btn reset" id="resetBtn">↺ إعادة تعيين</button>
+        </div>
+
+        <div class="info">
+            <span>الموضع: (<span class="val" id="posX">—</span>, <span class="val" id="posY">—</span>)</span>
+            <span>السرعة: <span class="val" id="velDisplay">—</span></span>
+            <span>الطاقة الحركية: <span class="val" id="keDisplay">—</span></span>
+        </div>
+
+        <div class="legend">
+            <span><span class="legend-dot" style="background:#ff6666;"></span> جسيم</span>
+            <span><span class="legend-dot" style="background:#88ff88;"></span> مسار</span>
+            <span style="color:#ffaa44;">⟶ اتجاه الحقل</span>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('labCanvas');
+        const ctx = canvas.getContext('2d');
+        const W = canvas.width, H = canvas.height;
+
+        const fieldMode = document.getElementById('fieldMode');
+        const fieldDirection = document.getElementById('fieldDirection');
+        const magneticView = document.getElementById('magneticView');
+        const fieldStrength = document.getElementById('fieldStrength');
+        const particleSpeed = document.getElementById('particleSpeed');
+        const animationSpeed = document.getElementById('animationSpeed');
+        const chargeSign = document.getElementById('chargeSign');
+        const showTrail = document.getElementById('showTrail');
+        const fireBtn = document.getElementById('fireBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const posXEl = document.getElementById('posX');
+        const posYEl = document.getElementById('posY');
+        const velDisplay = document.getElementById('velDisplay');
+        const keDisplay = document.getElementById('keDisplay');
+
+        const DT = 0.4;
+        const Q_OVER_M = 0.03;
+        const DAMP = 0.998;
+
+        let particles = [];
+        let running = false;
+        let animId = null;
+
+        class Particle {
+            constructor(x, y, vx, vy, charge) {
+                this.x = x; this.y = y;
+                this.vx = vx; this.vy = vy;
+                this.charge = charge;
+                this.trail = [];
+                this.maxTrail = 400;
+                this.alive = true;
+            }
+
+            pushTrail() {
+                this.trail.push({ x: this.x, y: this.y });
+                if (this.trail.length > this.maxTrail) this.trail.shift();
+            }
+
+            update(ex, ey, bx, by, bz) {
+                const q = this.charge;
+                const effectiveDT = DT * parseFloat(animationSpeed.value);
+                const ax = q * Q_OVER_M * (ex + this.vy * bz - 0 * by);
+                const ay = q * Q_OVER_M * (ey + 0 * bx - this.vx * bz);
+
+                this.vx += ax * effectiveDT;
+                this.vy += ay * effectiveDT;
+                this.vx *= DAMP;
+                this.vy *= DAMP;
+                this.x += this.vx * effectiveDT;
+                this.y += this.vy * effectiveDT;
+
+                if (this.x < -200 || this.x > W + 200 || this.y < -200 || this.y > H + 200) {
+                    this.alive = false;
+                }
+            }
+
+            draw(ctx) {
+                if (this.trail.length > 1) {
+                    ctx.beginPath();
+                    ctx.moveTo(this.trail[0].x, this.trail[0].y);
+                    for (let i = 1; i < this.trail.length; i++) {
+                        ctx.lineTo(this.trail[i].x, this.trail[i].y);
+                    }
+                    ctx.strokeStyle = 'rgba(136,255,136,0.5)';
+                    ctx.lineWidth = 1.5;
+                    ctx.stroke();
+                }
+
+                const grad = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, 20);
+                const col = this.charge > 0 ? '255,100,100' : '100,180,255';
+                grad.addColorStop(0, `rgba(${col},1)`);
+                grad.addColorStop(0.4, `rgba(${col},0.7)`);
+                grad.addColorStop(1, `rgba(${col},0)`);
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, 20, 0, Math.PI * 2);
+                ctx.fillStyle = grad;
+                ctx.fill();
+
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, 6, 0, Math.PI * 2);
+                ctx.fillStyle = this.charge > 0 ? '#ff6666' : '#66bbff';
+                ctx.fill();
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 10px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(this.charge > 0 ? '+' : '−', this.x, this.y);
+            }
+        }
+
+        function getField(mode, strength, direction) {
+            const s = strength * 0.01 * parseFloat(direction);
+            switch (mode) {
+                case 'E_parallel': return { ex: s, ey: 0, bx: 0, by: 0, bz: 0 };
+                case 'E_perp': return { ex: 0, ey: s, bx: 0, by: 0, bz: 0 };
+                case 'B_parallel': return { ex: 0, ey: 0, bx: 0, by: 0, bz: -s };
+                case 'B_perp': return { ex: 0, ey: 0, bx: 0, by: 0, bz: s };
+            }
+        }
+
+        function drawFieldIndicators(mode, strength, direction, magView) {
+            const s = Math.min(strength / 200, 1);
+            const alpha = 0.15 + s * 0.35;
+            const spacing = 50;
+            const dir = parseInt(direction);
+            const isMagnetic = mode.startsWith('B');
+            const baseBzSign = mode === 'B_parallel' ? -1 : 1;
+            const effectiveBzSign = baseBzSign * dir;
+
+            ctx.save();
+            switch (mode) {
+                case 'E_parallel':
+                    for (let y = 40; y < H; y += spacing) {
+                        for (let x = 40; x < W - 40; x += spacing * 2) {
+                            if (dir > 0) {
+                                drawArrow(ctx, x, y, x + 30, y, `rgba(255,170,68,${alpha})`, 2);
+                            } else {
+                                drawArrow(ctx, x + 30, y, x, y, `rgba(255,170,68,${alpha})`, 2);
+                            }
+                        }
+                    }
+                    break;
+                case 'E_perp':
+                    for (let x = 40; x < W; x += spacing) {
+                        for (let y = 40; y < H - 40; y += spacing * 2) {
+                            if (dir > 0) {
+                                drawArrow(ctx, x, y, x, y + 30, `rgba(255,170,68,${alpha})`, 2);
+                            } else {
+                                drawArrow(ctx, x, y + 30, x, y, `rgba(255,170,68,${alpha})`, 2);
+                            }
+                        }
+                    }
+                    break;
+                case 'B_parallel':
+                    if (magView === 'leftright') {
+                        drawMagneticPlateArrows(effectiveBzSign, alpha);
+                    } else {
+                        for (let x = 40; x < W; x += spacing) {
+                            for (let y = 40; y < H; y += spacing) {
+                                ctx.font = `${14 + 6 * s}px Arial`;
+                                ctx.fillStyle = `rgba(100,200,255,${alpha})`;
+                                ctx.textAlign = 'center';
+                                ctx.textBaseline = 'middle';
+                                ctx.fillText(effectiveBzSign > 0 ? '⊙' : '⊗', x, y);
+                            }
+                        }
+                    }
+                    break;
+                case 'B_perp':
+                    if (magView === 'leftright') {
+                        drawMagneticPlateArrows(effectiveBzSign, alpha);
+                    } else {
+                        for (let x = 40; x < W; x += spacing) {
+                            for (let y = 40; y < H; y += spacing) {
+                                ctx.font = `${14 + 6 * s}px Arial`;
+                                ctx.fillStyle = `rgba(100,200,255,${alpha})`;
+                                ctx.textAlign = 'center';
+                                ctx.textBaseline = 'middle';
+                                ctx.fillText(effectiveBzSign > 0 ? '⊙' : '⊗', x, y);
+                            }
+                        }
+                    }
+                    break;
+            }
+
+            if (mode.startsWith('E')) {
+                drawElectricPoles(mode, dir);
+            } else if (magView !== 'leftright') {
+                drawMagneticSidePoles(effectiveBzSign, alpha);
+            }
+
+            ctx.fillStyle = '#ffaa44';
+            ctx.font = 'bold 13px Arial';
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'top';
+            if (isMagnetic && magView === 'inout') {
+                ctx.fillText(effectiveBzSign > 0 ? 'اتجاه الحقل: ⊙ خارج الصفحة' : 'اتجاه الحقل: ⊗ داخل الصفحة', 14, 14);
+            } else {
+                ctx.fillText(dir > 0 ? 'اتجاه الحقل: يمين' : 'اتجاه الحقل: يسار', 14, 14);
+            }
+            ctx.restore();
+        }
+
+        function drawPoleTag(x, y, text, fillColor, textColor = '#ffffff') {
+            ctx.beginPath();
+            ctx.arc(x, y, 15, 0, Math.PI * 2);
+            ctx.fillStyle = fillColor;
+            ctx.fill();
+            ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+            ctx.lineWidth = 1.2;
+            ctx.stroke();
+            ctx.fillStyle = textColor;
+            ctx.font = 'bold 14px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(text, x, y);
+        }
+
+        function drawElectricPoles(mode, dir) {
+            const plusColor = 'rgba(255,105,105,0.9)';
+            const minusColor = 'rgba(120,180,255,0.9)';
+
+            if (mode === 'E_parallel') {
+                const leftPole = dir > 0 ? '+' : '-';
+                const rightPole = dir > 0 ? '-' : '+';
+                drawPoleTag(26, H / 2, leftPole, leftPole === '+' ? plusColor : minusColor);
+                drawPoleTag(W - 26, H / 2, rightPole, rightPole === '+' ? plusColor : minusColor);
+            } else {
+                const topPole = dir > 0 ? '+' : '-';
+                const bottomPole = dir > 0 ? '-' : '+';
+                drawPoleTag(W / 2, 26, topPole, topPole === '+' ? plusColor : minusColor);
+                drawPoleTag(W / 2, H - 26, bottomPole, bottomPole === '+' ? plusColor : minusColor);
+            }
+        }
+
+        function drawMagneticSidePoles(dirSign, alpha) {
+            const plateW = 18;
+            const edgePad = 20;
+            const topPad = 70;
+            const bottomPad = 70;
+            const leftX = edgePad;
+            const rightX = W - edgePad - plateW;
+            const leftPole = dirSign > 0 ? 'N' : 'S';
+            const rightPole = dirSign > 0 ? 'S' : 'N';
+
+            ctx.strokeStyle = `rgba(170,190,255,${0.45 + alpha * 0.4})`;
+            ctx.lineWidth = 1.8;
+            ctx.strokeRect(leftX, topPad, plateW, H - topPad - bottomPad);
+            ctx.strokeRect(rightX, topPad, plateW, H - topPad - bottomPad);
+
+            drawPoleTag(leftX + plateW / 2, H / 2, leftPole, 'rgba(90,150,255,0.85)');
+            drawPoleTag(rightX + plateW / 2, H / 2, rightPole, 'rgba(90,150,255,0.85)');
+        }
+
+        function drawMagneticPlateArrows(dirSign, alpha) {
+            const plateW = 20;
+            const edgePad = 24;
+            const topPad = 56;
+            const bottomPad = 56;
+            const leftX = edgePad;
+            const rightX = W - edgePad - plateW;
+            const leftPole = dirSign > 0 ? 'N' : 'S';
+            const rightPole = dirSign > 0 ? 'S' : 'N';
+
+            ctx.strokeStyle = `rgba(170,190,255,${0.55 + alpha * 0.45})`;
+            ctx.lineWidth = 2;
+            ctx.strokeRect(leftX, topPad, plateW, H - topPad - bottomPad);
+            ctx.strokeRect(rightX, topPad, plateW, H - topPad - bottomPad);
+
+            drawPoleTag(leftX + plateW / 2, H / 2, leftPole, 'rgba(90,150,255,0.88)');
+            drawPoleTag(rightX + plateW / 2, H / 2, rightPole, 'rgba(90,150,255,0.88)');
+
+            const startX = leftX + plateW + 16;
+            const endX = rightX - 16;
+            const rows = 5;
+            const usableH = H - topPad - bottomPad;
+
+            for (let i = 0; i < rows; i++) {
+                const y = topPad + ((i + 1) * usableH) / (rows + 1);
+                if (dirSign > 0) {
+                    drawArrow(ctx, startX, y, endX, y, `rgba(100,200,255,${0.35 + alpha * 0.6})`, 2.3);
+                } else {
+                    drawArrow(ctx, endX, y, startX, y, `rgba(100,200,255,${0.35 + alpha * 0.6})`, 2.3);
+                }
+            }
+        }
+
+        function drawArrow(ctx, x1, y1, x2, y2, color, width) {
+            const dx = x2 - x1, dy = y2 - y1;
+            const len = Math.sqrt(dx * dx + dy * dy);
+            if (len < 1) return;
+            const ux = dx / len, uy = dy / len;
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.strokeStyle = color;
+            ctx.lineWidth = width;
+            ctx.stroke();
+            const headLen = 8, headW = 5;
+            ctx.beginPath();
+            ctx.moveTo(x2, y2);
+            ctx.lineTo(x2 - ux * headLen + uy * headW, y2 - uy * headLen - ux * headW);
+            ctx.lineTo(x2 - ux * headLen - uy * headW, y2 - uy * headLen + ux * headW);
+            ctx.closePath();
+            ctx.fillStyle = color;
+            ctx.fill();
+        }
+
+        function fireParticle() {
+            const mode = fieldMode.value;
+            const speed = parseFloat(particleSpeed.value);
+            const charge = parseInt(chargeSign.value);
+            let vx = 0, vy = 0;
+            switch (mode) {
+                case 'E_parallel': vx = speed * 0.6; vy = 0; break;
+                case 'E_perp': vx = speed * 0.6; vy = 0; break;
+                case 'B_parallel': vx = speed * 0.4; vy = speed * 0.3; break;
+                case 'B_perp': vx = speed * 0.4; vy = speed * 0.2; break;
+            }
+            const p = new Particle(80, H / 2, vx, vy, charge);
+            p.pushTrail();
+            particles.push(p);
+            running = true;
+        }
+
+        function update() {
+            const mode = fieldMode.value;
+            const strength = parseFloat(fieldStrength.value);
+            const direction = fieldDirection.value;
+            const field = getField(mode, strength, direction);
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i];
+                if (!p.alive) { particles.splice(i, 1); continue; }
+                if (showTrail.checked) p.pushTrail();
+                p.update(field.ex, field.ey, field.bx, field.by, field.bz);
+            }
+            if (particles.length === 0) running = false;
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, W, H);
+            ctx.strokeStyle = '#1a1a30';
+            ctx.lineWidth = 0.5;
+            for (let x = 0; x <= W; x += 50) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
+            for (let y = 0; y <= H; y += 50) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+            drawFieldIndicators(fieldMode.value, parseFloat(fieldStrength.value), fieldDirection.value, magneticView.value);
+            for (const p of particles) p.draw(ctx);
+            if (particles.length > 0) {
+                const p = particles[particles.length - 1];
+                posXEl.textContent = p.x.toFixed(0);
+                posYEl.textContent = p.y.toFixed(0);
+                const v = Math.sqrt(p.vx * p.vx + p.vy * p.vy);
+                velDisplay.textContent = v.toFixed(1);
+                keDisplay.textContent = (0.5 * v * v).toFixed(0);
+            } else {
+                posXEl.textContent = '—'; posYEl.textContent = '—';
+                velDisplay.textContent = '—'; keDisplay.textContent = '—';
+            }
+        }
+
+        function loop() {
+            if (running) update();
+            draw();
+            animId = requestAnimationFrame(loop);
+        }
+
+        function resetSim() {
+            particles = [];
+            running = false;
+            posXEl.textContent = '—'; posYEl.textContent = '—';
+            velDisplay.textContent = '—'; keDisplay.textContent = '—';
+        }
+
+
+        canvas.addEventListener('click', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            const cx = (e.clientX - rect.left) * scaleX;
+            const cy = (e.clientY - rect.top) * scaleY;
+            const speed = parseFloat(particleSpeed.value);
+            const charge = parseInt(chargeSign.value);
+            const mode = fieldMode.value;
+            let vx = 0, vy = 0;
+            switch (mode) {
+                case 'E_parallel': vx = speed * 0.6; vy = 0; break;
+                case 'E_perp': vx = speed * 0.6; vy = 0; break;
+                case 'B_parallel': vx = speed * 0.4; vy = speed * 0.3; break;
+                case 'B_perp': vx = speed * 0.4; vy = speed * 0.2; break;
+            }
+            const p = new Particle(cx, cy, vx, vy, charge);
+            p.pushTrail();
+            particles.push(p);
+            running = true;
+        });
+
+        fireBtn.addEventListener('click', fireParticle);
+        resetBtn.addEventListener('click', resetSim);
+        loop();
+        setTimeout(fireParticle, 200);
+    </script>
+</body>
+
+</html>

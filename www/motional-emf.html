@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>تجربة القوة الدافعة الكهربائية الحركية</title>
+    <link rel="stylesheet" href="css/back-nav.css" />
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #0f0f1a;
+            color: #e0e0e0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 0;
+            margin: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        h1 {
+            font-size: 1.2rem;
+            margin: 0 0 8px 0;
+            color: #88ccff;
+            flex-shrink: 0;
+        }
+
+        .lab-container {
+            background: #1a1a2e;
+            border-radius: 0;
+            padding: 15px;
+            box-shadow: none;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            flex: 1;
+            background: #111122;
+            border-radius: 0;
+            border: 1px solid #2a2a4a;
+            min-height: 0;
+        }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px 20px;
+            margin-top: 8px;
+            align-items: center;
+            background: #141428;
+            padding: 10px 12px;
+            border-radius: 0;
+            border: 1px solid #2a2a4a;
+            flex-shrink: 0;
+            font-size: 0.75rem;
+        }
+
+        .controls label {
+            font-size: 0.85rem;
+            color: #aaa;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .controls input[type="range"] {
+            width: 110px;
+            accent-color: #4a8cff;
+        }
+
+        .controls select {
+            background: #1e1e3a;
+            color: #e0e0e0;
+            border: 1px solid #3a3a5a;
+            border-radius: 6px;
+            padding: 4px 8px;
+        }
+
+        .btn {
+            background: #2a4a8a;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 6px 16px;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            background: #3a6aaa;
+        }
+
+        .btn.reset {
+            background: #6a2a3a;
+        }
+
+        .btn.reset:hover {
+            background: #8a3a5a;
+        }
+
+        .info {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px 24px;
+            margin-top: 6px;
+            font-size: 0.7rem;
+            color: #99aacc;
+            flex-shrink: 0;
+        }
+
+        .info span {
+            background: #1a1a30;
+            padding: 4px 12px;
+            border-radius: 6px;
+        }
+
+        .info .val {
+            color: #88ddff;
+            font-weight: 600;
+        }
+
+        .legend {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            font-size: 0.7rem;
+            margin-top: 4px;
+            flex-shrink: 0;
+        }
+
+        .legend-dot {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 4px;
+            vertical-align: middle;
+        }
+    </style>
+</head>
+
+<body>
+    <a class="vl-back" href="index.html" aria-label="العودة">
+        <span class="vl-back__icon">&#8592;</span>
+        <span>رجوع</span>
+    </a>
+
+    <div class="lab-container">
+        <h1>⚡ نشاط 12: القوة الدافعة الكهربائية الحركية (Motional EMF)</h1>
+        <canvas id="emfCanvas" width="1000" height="600"></canvas>
+
+        <div class="controls">
+            <label>الحالة:
+                <select id="viewMode">
+                    <option value="a">شكل (12-a): تجميع الشحنات</option>
+                    <option value="b">شكل (12-b): المجال الكهربائي الداخلي</option>
+                    <option value="c">شكل (12-c): الاتزان F_E = F_B</option>
+                </select>
+            </label>
+
+            <label>كثافة المجال B
+                <input type="range" id="bField" min="0" max="300" value="140">
+            </label>
+
+            <label>سرعة الساق v
+                <input type="range" id="velocity" min="0" max="300" value="120">
+            </label>
+
+            <label>طول الساق ℓ
+                <input type="range" id="rodLength" min="120" max="360" value="260">
+            </label>
+
+            <button class="btn" id="stepBtn">تحديث الحالة</button>
+            <button class="btn reset" id="resetBtn">إعادة تعيين</button>
+        </div>
+
+        <div class="info">
+            <span>B: <span class="val" id="bVal">0.00</span> T</span>
+            <span>v: <span class="val" id="vVal">0.00</span> m/s</span>
+            <span>E الداخلي: <span class="val" id="eVal">0.00</span> V/m</span>
+            <span>ΔV = ε: <span class="val" id="emfVal">0.00</span> V</span>
+            <span>النسبة E/(vB): <span class="val" id="ratioVal">0.00</span></span>
+        </div>
+
+        <div class="legend">
+            <span><span class="legend-dot" style="background:#8ec8f2;"></span> مجال مغناطيسي (داخل الصفحة)</span>
+            <span><span class="legend-dot" style="background:#ff9f9f;"></span> ساق موصلة متحركة</span>
+            <span><span class="legend-dot" style="background:#88ff88;"></span> القوى/المجال الناتج</span>
+            <span style="color:#ffaa44;">العلاقة المستخدمة: ε = v B ℓ</span>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('emfCanvas');
+        const ctx = canvas.getContext('2d');
+        const W = canvas.width;
+        const H = canvas.height;
+
+        const viewMode = document.getElementById('viewMode');
+        const bField = document.getElementById('bField');
+        const velocity = document.getElementById('velocity');
+        const rodLength = document.getElementById('rodLength');
+        const stepBtn = document.getElementById('stepBtn');
+        const resetBtn = document.getElementById('resetBtn');
+
+        const bVal = document.getElementById('bVal');
+        const vVal = document.getElementById('vVal');
+        const eVal = document.getElementById('eVal');
+        const emfVal = document.getElementById('emfVal');
+        const ratioVal = document.getElementById('ratioVal');
+
+        const state = {
+            rodX: W * 0.39,
+            eInternal: 0,
+            targetE: 0,
+            phase: 0
+        };
+
+        const DT = 1 / 60;
+
+        function clamp(v, min, max) {
+            return Math.max(min, Math.min(max, v));
+        }
+
+        function drawGrid() {
+            ctx.strokeStyle = '#1a1a30';
+            ctx.lineWidth = 0.5;
+            for (let x = 0; x <= W; x += 50) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, H);
+                ctx.stroke();
+            }
+            for (let y = 0; y <= H; y += 50) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(W, y);
+                ctx.stroke();
+            }
+        }
+
+        function drawArrow(x1, y1, x2, y2, color, width) {
+            const dx = x2 - x1;
+            const dy = y2 - y1;
+            const len = Math.sqrt(dx * dx + dy * dy);
+            if (len < 1) return;
+
+            const ux = dx / len;
+            const uy = dy / len;
+            const head = 10;
+            const hw = 6;
+
+            ctx.strokeStyle = color;
+            ctx.lineWidth = width;
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.stroke();
+
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.moveTo(x2, y2);
+            ctx.lineTo(x2 - ux * head + uy * hw, y2 - uy * head - ux * hw);
+            ctx.lineTo(x2 - ux * head - uy * hw, y2 - uy * head + ux * hw);
+            ctx.closePath();
+            ctx.fill();
+        }
+
+        function drawMagneticFieldZone(zoneX, zoneY, zoneW, zoneH) {
+            ctx.fillStyle = 'rgba(100,170,255,0.07)';
+            ctx.fillRect(zoneX, zoneY, zoneW, zoneH);
+            ctx.strokeStyle = 'rgba(120,180,255,0.45)';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(zoneX, zoneY, zoneW, zoneH);
+
+            ctx.fillStyle = 'rgba(170,210,255,0.55)';
+            for (let x = zoneX + 24; x < zoneX + zoneW - 10; x += 34) {
+                for (let y = zoneY + 24; y < zoneY + zoneH - 10; y += 34) {
+                    ctx.font = 'bold 14px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText('×', x, y);
+                }
+            }
+
+            ctx.fillStyle = '#8ec8f2';
+            ctx.font = 'bold 13px Arial';
+            ctx.textAlign = 'right';
+            ctx.fillText('B إلى داخل الصفحة', zoneX + zoneW - 10, zoneY + 16);
+        }
+
+        function drawRod(rodX, rodY, rodW, rodH) {
+            const grad = ctx.createLinearGradient(rodX, rodY, rodX + rodW, rodY);
+            grad.addColorStop(0, '#f5b4b4');
+            grad.addColorStop(0.5, '#e88787');
+            grad.addColorStop(1, '#f5b4b4');
+
+            ctx.fillStyle = grad;
+            ctx.fillRect(rodX, rodY, rodW, rodH);
+            ctx.strokeStyle = '#f6d3d3';
+            ctx.lineWidth = 1.1;
+            ctx.strokeRect(rodX, rodY, rodW, rodH);
+
+            ctx.fillStyle = '#1f2a3a';
+            ctx.font = 'bold 12px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('ساق موصلة', rodX + rodW * 0.5, rodY + rodH + 18);
+        }
+
+        function drawCharges(rodX, rodY, rodW, rodH, intensity) {
+            const topCount = Math.round(4 + intensity * 7);
+            const bottomCount = Math.round(4 + intensity * 7);
+
+            ctx.fillStyle = '#ffd8d8';
+            for (let i = 0; i < topCount; i++) {
+                const x = rodX + 8 + (i % 4) * ((rodW - 16) / 3);
+                const y = rodY + 10 + Math.floor(i / 4) * 10;
+                ctx.fillText('+', x, y);
+            }
+
+            ctx.fillStyle = '#b7d9ff';
+            for (let i = 0; i < bottomCount; i++) {
+                const x = rodX + 8 + (i % 4) * ((rodW - 16) / 3);
+                const y = rodY + rodH - 12 - Math.floor(i / 4) * 10;
+                ctx.fillText('−', x, y);
+            }
+        }
+
+        function drawForcesAndVectors(rodX, rodY, rodW, rodH, mode, fbScale, feScale) {
+            const cx = rodX + rodW * 0.5;
+            const cy = rodY + rodH * 0.5;
+
+            drawArrow(rodX + rodW + 24, cy, rodX + rodW + 95, cy, '#88ff88', 2.5);
+            ctx.fillStyle = '#88ff88';
+            ctx.font = 'bold 13px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('v', rodX + rodW + 102, cy - 11);
+
+            if (mode === 'a' || mode === 'c') {
+                const fbLen = 30 + fbScale * 65;
+                drawArrow(cx, cy + 40, cx, cy - fbLen, '#ff5f5f', 2.6);
+                ctx.fillStyle = '#ff9f9f';
+                ctx.fillText('F_B', cx + 22, cy - fbLen + 6);
+            }
+
+            if (mode === 'b' || mode === 'c') {
+                const feLen = 26 + feScale * 65;
+                drawArrow(cx, cy - 40, cx, cy + feLen, '#7ed8ff', 2.6);
+                ctx.fillStyle = '#7ed8ff';
+                ctx.fillText('F_E', cx + 22, cy + feLen - 6);
+
+                ctx.strokeStyle = 'rgba(126,216,255,0.7)';
+                ctx.lineWidth = 2;
+                for (let i = 0; i < 3; i++) {
+                    const ex = rodX + rodW * 0.25 + i * rodW * 0.25;
+                    drawArrow(ex, rodY + 30, ex, rodY + rodH - 24, 'rgba(126,216,255,0.7)', 1.8);
+                }
+
+                ctx.fillStyle = '#7ed8ff';
+                ctx.fillText('E', rodX + rodW * 0.25, rodY + rodH * 0.5);
+            }
+        }
+
+        function drawEquationBlock(mode, v, B, L, eNow) {
+            const x = W * 0.66;
+            const y = H * 0.26;
+            const w = 290;
+            const h = 210;
+
+            ctx.fillStyle = 'rgba(20,20,40,0.9)';
+            ctx.strokeStyle = '#2f4366';
+            ctx.lineWidth = 1.2;
+            ctx.fillRect(x, y, w, h);
+            ctx.strokeRect(x, y, w, h);
+
+            ctx.fillStyle = '#88ccff';
+            ctx.font = 'bold 15px Arial';
+            ctx.textAlign = 'right';
+            ctx.fillText('تحليل الحالة', x + w - 14, y + 24);
+
+            ctx.fillStyle = '#b6cae6';
+            ctx.font = '13px Arial';
+            ctx.fillText(`v = ${v.toFixed(2)} m/s`, x + w - 14, y + 52);
+            ctx.fillText(`B = ${B.toFixed(2)} T`, x + w - 14, y + 74);
+            ctx.fillText(`ℓ = ${L.toFixed(2)} m`, x + w - 14, y + 96);
+
+            ctx.fillStyle = '#ffaa44';
+            ctx.font = 'bold 14px Arial';
+            ctx.fillText('ε = v B ℓ', x + w - 14, y + 126);
+
+            ctx.fillStyle = '#88ff88';
+            ctx.fillText(`ε الحالية = ${eNow.toFixed(3)} V`, x + w - 14, y + 150);
+
+            if (mode === 'a') {
+                ctx.fillStyle = '#ffb0b0';
+                ctx.fillText('تبدأ الشحنات بالتجمع بسبب F_B', x + w - 14, y + 176);
+            } else if (mode === 'b') {
+                ctx.fillStyle = '#9fe1ff';
+                ctx.fillText('يتكون مجال داخلي يعاكس الفصل', x + w - 14, y + 176);
+            } else {
+                ctx.fillStyle = '#b7ffcf';
+                ctx.fillText('حالة الاتزان: qE = qvB  =>  E = vB', x + w - 14, y + 176);
+            }
+        }
+
+        function updateModel() {
+            const mode = viewMode.value;
+            const B = parseFloat(bField.value) / 100;
+            const v = parseFloat(velocity.value) / 100;
+            const L = parseFloat(rodLength.value) / 1000;
+
+            state.phase += DT;
+            state.rodX = W * 0.26 + Math.sin(state.phase * (0.4 + v * 0.12)) * 70;
+
+            state.targetE = v * B;
+
+            let response = 0.12;
+            if (mode === 'a') response = 0.07;
+            if (mode === 'b') response = 0.18;
+            if (mode === 'c') response = 0.28;
+
+            state.eInternal += (state.targetE - state.eInternal) * response;
+            const emf = state.eInternal * L;
+            const ratio = state.targetE < 1e-6 ? 0 : state.eInternal / state.targetE;
+
+            bVal.textContent = B.toFixed(2);
+            vVal.textContent = v.toFixed(2);
+            eVal.textContent = state.eInternal.toFixed(3);
+            emfVal.textContent = emf.toFixed(3);
+            ratioVal.textContent = ratio.toFixed(2);
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, W, H);
+            drawGrid();
+
+            const mode = viewMode.value;
+            const B = parseFloat(bField.value) / 100;
+            const v = parseFloat(velocity.value) / 100;
+            const L = parseFloat(rodLength.value) / 1000;
+            const rodH = parseFloat(rodLength.value);
+            const rodW = 48;
+            const rodY = H * 0.22;
+            const rodX = state.rodX;
+
+            const zoneX = W * 0.1;
+            const zoneY = H * 0.12;
+            const zoneW = W * 0.48;
+            const zoneH = H * 0.73;
+
+            drawMagneticFieldZone(zoneX, zoneY, zoneW, zoneH);
+            drawRod(rodX, rodY, rodW, rodH);
+
+            const fBScale = clamp(v * B / 3, 0, 1);
+            const fEScale = clamp(state.eInternal / 3, 0, 1);
+            drawForcesAndVectors(rodX, rodY, rodW, rodH, mode, fBScale, fEScale);
+
+            const chargeIntensity = clamp((v * B) / 2.6, 0.15, 1);
+            drawCharges(rodX, rodY, rodW, rodH, chargeIntensity);
+
+            drawEquationBlock(mode, v, B, L, state.eInternal * L);
+
+            ctx.fillStyle = '#ffaa44';
+            ctx.font = 'bold 13px Arial';
+            ctx.textAlign = 'right';
+            if (mode === 'a') {
+                ctx.fillText('شكل (12-a): القوة المغناطيسية تدفع الشحنات الموجبة نحو الأعلى', W - 16, 16);
+            } else if (mode === 'b') {
+                ctx.fillText('شكل (12-b): المجال الكهربائي المتولد داخل الساق يتجه لأسفل', W - 16, 16);
+            } else {
+                ctx.fillText('شكل (12-c): عند الاتزان تصبح F_E و F_B متساويتين مقدارًا ومتعاكستين اتجاهًا', W - 16, 16);
+            }
+        }
+
+        function loop() {
+            updateModel();
+            draw();
+            requestAnimationFrame(loop);
+        }
+
+        stepBtn.addEventListener('click', () => {
+            state.phase += 0.12;
+            updateModel();
+            draw();
+        });
+
+        resetBtn.addEventListener('click', () => {
+            bField.value = '140';
+            velocity.value = '120';
+            rodLength.value = '260';
+            viewMode.value = 'a';
+            state.phase = 0;
+            state.eInternal = 0;
+            state.targetE = 0;
+            state.rodX = W * 0.39;
+        });
+
+        loop();
+    </script>
+</body>
+
+</html>

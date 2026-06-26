@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>الحث الكهرومغناطيسي ومبدأ حفظ الطاقة</title>
+    <link rel="stylesheet" href="css/back-nav.css" />
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #0f0f1a;
+            color: #e0e0e0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 0;
+            margin: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        h1 {
+            font-size: 1.2rem;
+            margin: 0 0 8px 0;
+            color: #88ccff;
+            flex-shrink: 0;
+        }
+
+        .lab-container {
+            background: #1a1a2e;
+            border-radius: 0;
+            padding: 15px;
+            box-shadow: none;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            flex: 1;
+            background: #111122;
+            border-radius: 0;
+            border: 1px solid #2a2a4a;
+            min-height: 0;
+        }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px 20px;
+            margin-top: 8px;
+            align-items: center;
+            background: #141428;
+            padding: 10px 12px;
+            border-radius: 0;
+            border: 1px solid #2a2a4a;
+            flex-shrink: 0;
+            font-size: 0.75rem;
+        }
+
+        .controls label {
+            font-size: 0.85rem;
+            color: #aaa;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .controls input[type="range"] {
+            width: 110px;
+            accent-color: #4a8cff;
+        }
+
+        .btn {
+            background: #2a4a8a;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 6px 16px;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            background: #3a6aaa;
+        }
+
+        .btn.reset {
+            background: #6a2a3a;
+        }
+
+        .btn.reset:hover {
+            background: #8a3a5a;
+        }
+
+        .info {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px 24px;
+            margin-top: 6px;
+            font-size: 0.7rem;
+            color: #99aacc;
+            flex-shrink: 0;
+        }
+
+        .info span {
+            background: #1a1a30;
+            padding: 4px 12px;
+            border-radius: 6px;
+        }
+
+        .info .val {
+            color: #88ddff;
+            font-weight: 600;
+        }
+
+        .legend {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            font-size: 0.7rem;
+            margin-top: 4px;
+            flex-shrink: 0;
+        }
+
+        .legend-dot {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 4px;
+            vertical-align: middle;
+        }
+    </style>
+</head>
+
+<body>
+    <a class="vl-back" href="index.html" aria-label="العودة">
+        <span class="vl-back__icon">&#8592;</span>
+        <span>رجوع</span>
+    </a>
+
+    <div class="lab-container">
+        <h1>⚙ نشاط 14: الحث الكهرومغناطيسي ومبدأ حفظ الطاقة</h1>
+        <canvas id="energyCanvas" width="1000" height="600"></canvas>
+
+        <div class="controls">
+            <label>كثافة المجال B
+                <input type="range" id="bField" min="0" max="300" value="140">
+            </label>
+
+            <label>مقاومة الدائرة R
+                <input type="range" id="resistance" min="1" max="30" value="8">
+            </label>
+
+            <label>طول الساق ℓ
+                <input type="range" id="rodLength" min="160" max="320" value="220">
+            </label>
+
+            <label>السرعة الثابتة v
+                <input type="range" id="velocity" min="20" max="250" value="110">
+            </label>
+
+            <button class="btn" id="toggleBtn">بدء السحب</button>
+            <button class="btn reset" id="resetBtn">إعادة تعيين</button>
+        </div>
+
+        <div class="info">
+            <span>ε = vBℓ: <span class="val" id="emfVal">0.000</span> V</span>
+            <span>I = ε/R: <span class="val" id="currentVal">0.000</span> A</span>
+            <span>F<sub>pull</sub> = IℓB: <span class="val" id="forceVal">0.000</span> N</span>
+            <span>P<sub>mech</sub> = Fv: <span class="val" id="pMechVal">0.000</span> W</span>
+            <span>P<sub>elec</sub> = I²R: <span class="val" id="pElecVal">0.000</span> W</span>
+            <span>ΔP: <span class="val" id="deltaPVal">0.000</span> W</span>
+        </div>
+
+        <div class="legend">
+            <span><span class="legend-dot" style="background:#8ec8f2;"></span> مجال مغناطيسي (× للداخل)</span>
+            <span><span class="legend-dot" style="background:#ff9f9f;"></span> ساق متحركة بسرعة ثابتة</span>
+            <span><span class="legend-dot" style="background:#88ff88;"></span> قوة السحب الخارجية F<sub>pull</sub></span>
+            <span style="color:#ffaa44;">عند الاتزان: القدرة الميكانيكية = القدرة الكهربائية</span>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('energyCanvas');
+        const ctx = canvas.getContext('2d');
+        const W = canvas.width;
+        const H = canvas.height;
+
+        const bField = document.getElementById('bField');
+        const resistance = document.getElementById('resistance');
+        const rodLength = document.getElementById('rodLength');
+        const velocity = document.getElementById('velocity');
+        const toggleBtn = document.getElementById('toggleBtn');
+        const resetBtn = document.getElementById('resetBtn');
+
+        const emfVal = document.getElementById('emfVal');
+        const currentVal = document.getElementById('currentVal');
+        const forceVal = document.getElementById('forceVal');
+        const pMechVal = document.getElementById('pMechVal');
+        const pElecVal = document.getElementById('pElecVal');
+        const deltaPVal = document.getElementById('deltaPVal');
+
+        const state = {
+            running: false,
+            rodX: 380,
+            emf: 0,
+            current: 0,
+            pullForce: 0,
+            pMech: 0,
+            pElec: 0,
+            deltaP: 0
+        };
+
+        const DT = 1 / 60;
+
+        function drawGrid() {
+            ctx.strokeStyle = '#1a1a30';
+            ctx.lineWidth = 0.5;
+            for (let x = 0; x <= W; x += 50) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, H);
+                ctx.stroke();
+            }
+            for (let y = 0; y <= H; y += 50) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(W, y);
+                ctx.stroke();
+            }
+        }
+
+        function clamp(v, min, max) {
+            return Math.max(min, Math.min(max, v));
+        }
+
+        function drawArrow(x1, y1, x2, y2, color, width) {
+            const dx = x2 - x1;
+            const dy = y2 - y1;
+            const len = Math.sqrt(dx * dx + dy * dy);
+            if (len < 1) return;
+            const ux = dx / len;
+            const uy = dy / len;
+            const head = 9;
+            const hw = 5;
+
+            ctx.strokeStyle = color;
+            ctx.lineWidth = width;
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.stroke();
+
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.moveTo(x2, y2);
+            ctx.lineTo(x2 - ux * head + uy * hw, y2 - uy * head - ux * hw);
+            ctx.lineTo(x2 - ux * head - uy * hw, y2 - uy * head + ux * hw);
+            ctx.closePath();
+            ctx.fill();
+        }
+
+        function drawWire(points, core, glow) {
+            if (!points || points.length < 2) return;
+
+            ctx.lineJoin = 'round';
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(points[0][0], points[0][1]);
+            for (let i = 1; i < points.length; i++) ctx.lineTo(points[i][0], points[i][1]);
+            ctx.strokeStyle = '#1e2430';
+            ctx.lineWidth = 7;
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(points[0][0], points[0][1]);
+            for (let i = 1; i < points.length; i++) ctx.lineTo(points[i][0], points[i][1]);
+            ctx.strokeStyle = core;
+            ctx.lineWidth = 3.4;
+            ctx.stroke();
+
+            if (glow > 0.01) {
+                ctx.save();
+                ctx.beginPath();
+                ctx.moveTo(points[0][0], points[0][1]);
+                for (let i = 1; i < points.length; i++) ctx.lineTo(points[i][0], points[i][1]);
+                ctx.strokeStyle = `rgba(255,230,140,${clamp(glow, 0, 0.8)})`;
+                ctx.lineWidth = 2;
+                ctx.shadowColor = `rgba(255,210,110,${clamp(glow + 0.1, 0, 0.95)})`;
+                ctx.shadowBlur = 8;
+                ctx.stroke();
+                ctx.restore();
+            }
+        }
+
+        function drawLamp(x, y, intensity) {
+            const glow = clamp(intensity, 0, 1);
+            if (glow > 0.01) {
+                const g = ctx.createRadialGradient(x, y, 5, x, y, 42);
+                g.addColorStop(0, `rgba(255,233,140,${0.35 + glow * 0.5})`);
+                g.addColorStop(1, 'rgba(255,233,140,0)');
+                ctx.fillStyle = g;
+                ctx.beginPath();
+                ctx.arc(x, y, 42, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            ctx.fillStyle = '#d0d9e2';
+            ctx.strokeStyle = '#7c8e9a';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(x, y, 16, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.fillStyle = `rgba(255,217,102,${0.25 + glow * 0.75})`;
+            ctx.beginPath();
+            ctx.arc(x, y, 10, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#7c8e9a';
+            ctx.fillRect(x - 7, y + 12, 14, 10);
+        }
+
+        function getLayout() {
+            const l = parseFloat(rodLength.value);
+            const midY = H * 0.52;
+            return {
+                topY: midY - l / 2,
+                bottomY: midY + l / 2,
+                leftX: 180,
+                rightX: 820,
+                rodW: 22,
+                lampX: 130,
+                lampY: midY - l / 2 - 52
+            };
+        }
+
+        function updateModel() {
+            const B = parseFloat(bField.value) / 100;
+            const R = parseFloat(resistance.value);
+            const l = parseFloat(rodLength.value) / 1000;
+            const v = (state.running ? parseFloat(velocity.value) : 0) / 100;
+
+            state.emf = v * B * l;
+            state.current = R > 0 ? state.emf / R : 0;
+            state.pullForce = state.current * l * B;
+            state.pMech = state.pullForce * v;
+            state.pElec = state.current * state.current * R;
+            state.deltaP = state.pMech - state.pElec;
+
+            emfVal.textContent = state.emf.toFixed(3);
+            currentVal.textContent = state.current.toFixed(3);
+            forceVal.textContent = state.pullForce.toFixed(3);
+            pMechVal.textContent = state.pMech.toFixed(3);
+            pElecVal.textContent = state.pElec.toFixed(3);
+            deltaPVal.textContent = state.deltaP.toFixed(3);
+
+            if (state.running) {
+                state.rodX += v * 180 * DT;
+                const L = getLayout();
+                if (state.rodX > L.rightX - 10) {
+                    state.rodX = L.leftX + 220;
+                }
+            }
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, W, H);
+            drawGrid();
+
+            const B = parseFloat(bField.value) / 100;
+            const L = getLayout();
+            const lampGlow = clamp(Math.abs(state.current) * 6, 0, 1);
+
+            ctx.fillStyle = 'rgba(100,170,255,0.06)';
+            ctx.fillRect(L.leftX, L.topY, L.rightX - L.leftX, L.bottomY - L.topY);
+            ctx.strokeStyle = 'rgba(120,180,255,0.45)';
+            ctx.strokeRect(L.leftX, L.topY, L.rightX - L.leftX, L.bottomY - L.topY);
+
+            ctx.fillStyle = `rgba(170,210,255,${0.18 + B * 0.14})`;
+            ctx.font = 'bold 14px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            for (let x = L.leftX + 20; x < L.rightX - 10; x += 32) {
+                for (let y = L.topY + 18; y < L.bottomY - 10; y += 28) {
+                    ctx.fillText('×', x, y);
+                }
+            }
+
+            ctx.strokeStyle = '#9aa7b5';
+            ctx.lineWidth = 6;
+            ctx.beginPath();
+            ctx.moveTo(L.leftX, L.topY);
+            ctx.lineTo(L.rightX, L.topY);
+            ctx.moveTo(L.leftX, L.bottomY);
+            ctx.lineTo(L.rightX, L.bottomY);
+            ctx.moveTo(L.leftX, L.topY);
+            ctx.lineTo(L.leftX, L.bottomY);
+            ctx.stroke();
+
+            drawLamp(L.lampX, L.lampY, lampGlow);
+
+            drawWire([
+                [L.leftX, L.topY],
+                [L.leftX - 62, L.topY],
+                [L.leftX - 62, L.lampY],
+                [L.lampX - 16, L.lampY]
+            ], '#d0d8e2', lampGlow * 0.5);
+
+            drawWire([
+                [L.lampX + 16, L.lampY],
+                [L.leftX - 42, L.lampY],
+                [L.leftX - 42, L.bottomY],
+                [L.leftX, L.bottomY]
+            ], '#d0d8e2', lampGlow * 0.5);
+
+            ctx.fillStyle = '#f3b3b3';
+            ctx.fillRect(state.rodX - L.rodW / 2, L.topY - 3, L.rodW, L.bottomY - L.topY + 6);
+            ctx.strokeStyle = '#f6d3d3';
+            ctx.lineWidth = 1.4;
+            ctx.strokeRect(state.rodX - L.rodW / 2, L.topY - 3, L.rodW, L.bottomY - L.topY + 6);
+
+            drawArrow(state.rodX + 34, H * 0.52, state.rodX + 102, H * 0.52, '#88ff88', 2.5);
+            ctx.fillStyle = '#88ff88';
+            ctx.font = 'bold 13px Arial';
+            ctx.fillText('F_pull', state.rodX + 110, H * 0.52 - 11);
+
+            if (Math.abs(state.current) > 0.001) {
+                drawArrow(state.rodX + 12, H * 0.52, state.rodX - 55, H * 0.52, '#ff9f9f', 2.5);
+                ctx.fillStyle = '#ff9f9f';
+                ctx.fillText('F_B2', state.rodX - 62, H * 0.52 - 11);
+            }
+
+            const v = (state.running ? parseFloat(velocity.value) : 0) / 100;
+            if (v > 0) {
+                drawArrow(state.rodX, L.bottomY + 36, state.rodX + 68, L.bottomY + 36, '#7ed8ff', 2.3);
+                ctx.fillStyle = '#7ed8ff';
+                ctx.fillText('v', state.rodX + 76, L.bottomY + 26);
+            }
+
+            ctx.fillStyle = '#ffaa44';
+            ctx.font = 'bold 13px Arial';
+            ctx.textAlign = 'right';
+            ctx.fillText('عند السرعة الثابتة: F_pull = F_B2 ويكون الشغل الميكانيكي مساويًا للطاقة الكهربائية المتولدة', W - 16, 16);
+            ctx.fillText('P_mech = F_pull v  و  P_elec = I²R', W - 16, 36);
+
+            const boxX = 640;
+            const boxY = 72;
+            const boxW = 320;
+            const boxH = 114;
+            ctx.fillStyle = 'rgba(20,20,40,0.9)';
+            ctx.strokeStyle = '#2f4366';
+            ctx.lineWidth = 1.2;
+            ctx.fillRect(boxX, boxY, boxW, boxH);
+            ctx.strokeRect(boxX, boxY, boxW, boxH);
+
+            ctx.fillStyle = '#88ccff';
+            ctx.font = 'bold 14px Arial';
+            ctx.fillText('ملخص العلاقات', boxX + boxW - 14, boxY + 24);
+            ctx.fillStyle = '#ffaa44';
+            ctx.fillText('I = (vBℓ) / R', boxX + boxW - 14, boxY + 48);
+            ctx.fillText('F_pull = IℓB = vB²ℓ² / R', boxX + boxW - 14, boxY + 70);
+            ctx.fillText('P_mech = Fv  ≈  I²R = P_elec', boxX + boxW - 14, boxY + 92);
+        }
+
+        toggleBtn.addEventListener('click', () => {
+            state.running = !state.running;
+            toggleBtn.textContent = state.running ? 'إيقاف السحب' : 'بدء السحب';
+        });
+
+        resetBtn.addEventListener('click', () => {
+            bField.value = '140';
+            resistance.value = '8';
+            rodLength.value = '220';
+            velocity.value = '110';
+            state.running = false;
+            state.rodX = 380;
+            state.emf = 0;
+            state.current = 0;
+            state.pullForce = 0;
+            state.pMech = 0;
+            state.pElec = 0;
+            state.deltaP = 0;
+            toggleBtn.textContent = 'بدء السحب';
+        });
+
+        function loop() {
+            updateModel();
+            draw();
+            requestAnimationFrame(loop);
+        }
+
+        loop();
+    </script>
+</body>
+
+</html>

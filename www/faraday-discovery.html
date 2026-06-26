@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>تجربة اكتشاف فاراداي</title>
+    <link rel="stylesheet" href="css/back-nav.css" />
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #0f0f1a;
+            color: #e0e0e0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 0;
+            margin: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        h1 {
+            font-size: 1.2rem;
+            margin: 0 0 8px 0;
+            color: #88ccff;
+            flex-shrink: 0;
+        }
+
+        .lab-container {
+            background: #1a1a2e;
+            border-radius: 0;
+            padding: 15px;
+            box-shadow: none;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            flex: 1;
+            background: #111122;
+            border-radius: 0;
+            border: 1px solid #2a2a4a;
+            min-height: 0;
+        }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px 20px;
+            margin-top: 8px;
+            align-items: center;
+            background: #141428;
+            padding: 10px 12px;
+            border-radius: 0;
+            border: 1px solid #2a2a4a;
+            flex-shrink: 0;
+            font-size: 0.75rem;
+        }
+
+        .controls label {
+            font-size: 0.85rem;
+            color: #aaa;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .controls input[type="range"] {
+            width: 110px;
+            accent-color: #4a8cff;
+        }
+
+        .btn {
+            background: #2a4a8a;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 6px 16px;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            background: #3a6aaa;
+        }
+
+        .btn.reset {
+            background: #6a2a3a;
+        }
+
+        .btn.reset:hover {
+            background: #8a3a5a;
+        }
+
+        .btn.switch-on {
+            background: #2f7a4b;
+        }
+
+        .btn.switch-on:hover {
+            background: #399a5f;
+        }
+
+        .info {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px 24px;
+            margin-top: 6px;
+            font-size: 0.7rem;
+            color: #99aacc;
+            flex-shrink: 0;
+        }
+
+        .info span {
+            background: #1a1a30;
+            padding: 4px 12px;
+            border-radius: 6px;
+        }
+
+        .info .val {
+            color: #88ddff;
+            font-weight: 600;
+        }
+
+        .legend {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            font-size: 0.7rem;
+            margin-top: 4px;
+            flex-shrink: 0;
+        }
+
+        .legend-dot {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 4px;
+            vertical-align: middle;
+        }
+    </style>
+</head>
+
+<body>
+    <a class="vl-back" href="index.html" aria-label="العودة">
+        <span class="vl-back__icon">&#8592;</span>
+        <span>رجوع</span>
+    </a>
+    <div class="lab-container">
+        <h1>⚡ تجربة اكتشاف فاراداي: الحث بين ملفين</h1>
+        <canvas id="expCanvas" width="1000" height="600"></canvas>
+
+        <div class="controls">
+            <label>لفات الملف الابتدائي
+                <input type="range" id="nPrimary" min="20" max="400" value="180">
+            </label>
+
+            <label>لفات الملف الثانوي
+                <input type="range" id="nSecondary" min="20" max="400" value="180">
+            </label>
+
+            <label>قوة البطارية
+                <input type="range" id="battery" min="1" max="24" value="12">
+            </label>
+
+            <label>معامل الاقتران
+                <input type="range" id="coupling" min="0.1" max="1" step="0.1" value="0.8">
+            </label>
+
+            <button class="btn" id="toggleSwitchBtn">إغلاق المفتاح</button>
+            <button class="btn" id="pulseBtn">نبضة سريعة</button>
+            <button class="btn reset" id="resetBtn">إعادة تعيين</button>
+        </div>
+
+        <div class="info">
+            <span>حالة المفتاح: <span class="val" id="switchStateVal">مفتوح</span></span>
+            <span>تيار الملف الابتدائي: <span class="val" id="iPrimaryVal">0.00 A</span></span>
+            <span>dI/dt: <span class="val" id="diVal">0.00 A/s</span></span>
+            <span>القوة المستحثة بالثانوي: <span class="val" id="emfVal">0.00 V</span></span>
+            <span>انحراف المؤشر: <span class="val" id="needleVal">0.00</span></span>
+        </div>
+
+        <div class="legend">
+            <span><span class="legend-dot" style="background:#ffd166;"></span> الدائرة الابتدائية (بطارية + مفتاح)</span>
+            <span><span class="legend-dot" style="background:#9ad1ff;"></span> الدائرة الثانوية (جلفانومتر)</span>
+            <span style="color:#ffaa44;">الانحراف يظهر فقط عند لحظات الفتح/الإغلاق وتغير التيار</span>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('expCanvas');
+        const ctx = canvas.getContext('2d');
+        const W = canvas.width;
+        const H = canvas.height;
+
+        const nPrimaryEl = document.getElementById('nPrimary');
+        const nSecondaryEl = document.getElementById('nSecondary');
+        const batteryEl = document.getElementById('battery');
+        const couplingEl = document.getElementById('coupling');
+        const toggleSwitchBtn = document.getElementById('toggleSwitchBtn');
+        const pulseBtn = document.getElementById('pulseBtn');
+        const resetBtn = document.getElementById('resetBtn');
+
+        const switchStateVal = document.getElementById('switchStateVal');
+        const iPrimaryVal = document.getElementById('iPrimaryVal');
+        const diVal = document.getElementById('diVal');
+        const emfVal = document.getElementById('emfVal');
+        const needleVal = document.getElementById('needleVal');
+
+        const state = {
+            switchClosed: false,
+            iPrimary: 0,
+            prevI: 0,
+            emfSecondary: 0,
+            needle: 0,
+            pulseTime: 0
+        };
+
+        const DT = 1 / 60;
+
+        function clamp(v, min, max) {
+            return Math.max(min, Math.min(max, v));
+        }
+
+        function drawGrid() {
+            ctx.strokeStyle = '#1a1a30';
+            ctx.lineWidth = 0.5;
+            for (let x = 0; x <= W; x += 50) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, H);
+                ctx.stroke();
+            }
+            for (let y = 0; y <= H; y += 50) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(W, y);
+                ctx.stroke();
+            }
+        }
+
+        function roundRect(x, y, w, h, r) {
+            const rr = Math.min(r, w / 2, h / 2);
+            ctx.beginPath();
+            ctx.moveTo(x + rr, y);
+            ctx.arcTo(x + w, y, x + w, y + h, rr);
+            ctx.arcTo(x + w, y + h, x, y + h, rr);
+            ctx.arcTo(x, y + h, x, y, rr);
+            ctx.arcTo(x, y, x + w, y, rr);
+            ctx.closePath();
+        }
+
+        function drawBattery(x, y) {
+            const bw = 108;
+            const bh = 62;
+            const bx = x - bw / 2;
+            const by = y - bh / 2;
+
+            const bodyGrad = ctx.createLinearGradient(bx, by, bx + bw, by + bh);
+            bodyGrad.addColorStop(0, '#2f3647');
+            bodyGrad.addColorStop(0.55, '#444f67');
+            bodyGrad.addColorStop(1, '#262d3c');
+
+            roundRect(bx, by, bw, bh, 9);
+            ctx.fillStyle = bodyGrad;
+            ctx.fill();
+            ctx.strokeStyle = '#7e8ca6';
+            ctx.lineWidth = 1.6;
+            ctx.stroke();
+
+            ctx.fillStyle = 'rgba(255,255,255,0.08)';
+            roundRect(bx + 6, by + 6, bw - 12, 14, 6);
+            ctx.fill();
+
+            // Positive and negative terminal heads.
+            ctx.fillStyle = '#d6b978';
+            const negHead = { x: bx + 10, y: by + 2 };
+            const posHead = { x: bx + bw - 10, y: by + 2 };
+            roundRect(negHead.x - 4, negHead.y, 8, 14, 2);
+            ctx.fill();
+            roundRect(posHead.x - 4, posHead.y, 8, 14, 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#dbe4f2';
+            ctx.font = 'bold 12px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('-', negHead.x, by - 8);
+            ctx.fillText('+', posHead.x, by - 8);
+
+            ctx.fillStyle = '#ffd166';
+            ctx.font = 'bold 11px Arial';
+            ctx.fillText(`${parseFloat(batteryEl.value).toFixed(0)}V`, bx + bw / 2, y);
+
+            return {
+                positive: { x: posHead.x, y: posHead.y },
+                negative: { x: negHead.x, y: negHead.y }
+            };
+        }
+
+        function drawSwitch(x, y) {
+            const baseX = x - 8;
+            const baseY = y - 15;
+            const baseW = 70;
+            const baseH = 24;
+
+            const baseGrad = ctx.createLinearGradient(baseX, baseY, baseX, baseY + baseH);
+            baseGrad.addColorStop(0, '#564b44');
+            baseGrad.addColorStop(1, '#3e352f');
+            roundRect(baseX, baseY, baseW, baseH, 5);
+            ctx.fillStyle = baseGrad;
+            ctx.fill();
+            ctx.strokeStyle = '#7a6a60';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+            const leftStudX = x + 2;
+            const rightStudX = x + 48;
+            const studY = y - 3;
+
+            ctx.fillStyle = '#c8b27b';
+            ctx.beginPath();
+            ctx.arc(leftStudX, studY, 4.4, 0, Math.PI * 2);
+            ctx.arc(rightStudX, studY, 4.4, 0, Math.PI * 2);
+            ctx.fill();
+
+            const pivotX = leftStudX;
+            const pivotY = studY;
+            const tipX = state.switchClosed ? rightStudX : x + 34;
+            const tipY = state.switchClosed ? studY : y - 21;
+
+            const armGrad = ctx.createLinearGradient(pivotX, pivotY, tipX, tipY);
+            armGrad.addColorStop(0, '#d9dde2');
+            armGrad.addColorStop(1, '#8f9aa7');
+            ctx.strokeStyle = armGrad;
+            ctx.lineWidth = 4;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(pivotX, pivotY);
+            ctx.lineTo(tipX, tipY);
+            ctx.stroke();
+
+            ctx.fillStyle = '#e2e8f0';
+            ctx.beginPath();
+            ctx.arc(pivotX, pivotY, 2.4, 0, Math.PI * 2);
+            ctx.fill();
+
+            if (!state.switchClosed) {
+                ctx.strokeStyle = 'rgba(255,209,102,0.45)';
+                ctx.lineWidth = 1.2;
+                ctx.beginPath();
+                ctx.moveTo(x + 37, y - 17);
+                ctx.lineTo(x + 45, y - 9);
+                ctx.moveTo(x + 35, y - 7);
+                ctx.lineTo(x + 44, y - 4);
+                ctx.stroke();
+            }
+
+            return {
+                leftContact: { x: leftStudX, y: studY },
+                rightContact: { x: rightStudX, y: studY }
+            };
+        }
+
+        function drawWire(points, colorCore, glow) {
+            if (!points || points.length < 2) return;
+
+            ctx.lineJoin = 'round';
+            ctx.lineCap = 'round';
+
+            ctx.beginPath();
+            ctx.moveTo(points[0][0], points[0][1]);
+            for (let i = 1; i < points.length; i++) {
+                ctx.lineTo(points[i][0], points[i][1]);
+            }
+            ctx.strokeStyle = '#1f2432';
+            ctx.lineWidth = 7;
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(points[0][0], points[0][1]);
+            for (let i = 1; i < points.length; i++) {
+                ctx.lineTo(points[i][0], points[i][1]);
+            }
+            ctx.strokeStyle = colorCore;
+            ctx.lineWidth = 3.4;
+            ctx.stroke();
+
+            if (glow > 0.01) {
+                ctx.save();
+                ctx.beginPath();
+                ctx.moveTo(points[0][0], points[0][1]);
+                for (let i = 1; i < points.length; i++) {
+                    ctx.lineTo(points[i][0], points[i][1]);
+                }
+                ctx.strokeStyle = `rgba(255,245,170,${clamp(glow, 0, 0.8)})`;
+                ctx.lineWidth = 2.2;
+                ctx.shadowColor = `rgba(255,220,120,${clamp(glow + 0.1, 0, 0.9)})`;
+                ctx.shadowBlur = 8;
+                ctx.stroke();
+                ctx.restore();
+            }
+
+            ctx.beginPath();
+            ctx.moveTo(points[0][0], points[0][1] - 1.1);
+            for (let i = 1; i < points.length; i++) {
+                ctx.lineTo(points[i][0], points[i][1] - 1.1);
+            }
+            ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+            ctx.lineWidth = 1.05;
+            ctx.stroke();
+        }
+
+        function drawToroid(cx, cy) {
+            const outerR = 92;
+            const innerR = 50;
+            const leftTurns = Math.round(clamp(parseFloat(nPrimaryEl.value) / 12, 8, 20));
+            const rightTurns = Math.round(clamp(parseFloat(nSecondaryEl.value) / 12, 8, 20));
+
+            ctx.save();
+            ctx.shadowColor = 'rgba(0,0,0,0.4)';
+            ctx.shadowBlur = 14;
+            ctx.shadowOffsetY = 4;
+
+            const coreGrad = ctx.createRadialGradient(cx - 22, cy - 20, 16, cx, cy, outerR + 10);
+            coreGrad.addColorStop(0, '#566579');
+            coreGrad.addColorStop(0.45, '#2f4052');
+            coreGrad.addColorStop(1, '#1a2331');
+
+            ctx.beginPath();
+            ctx.arc(cx, cy, outerR, 0, Math.PI * 2);
+            ctx.arc(cx, cy, innerR, 0, Math.PI * 2, true);
+            ctx.closePath();
+            ctx.fillStyle = coreGrad;
+            ctx.fill();
+            ctx.restore();
+
+            ctx.strokeStyle = 'rgba(205,220,240,0.22)';
+            ctx.lineWidth = 1.4;
+            ctx.beginPath();
+            ctx.arc(cx, cy, outerR - 2, Math.PI * 1.1, Math.PI * 1.9);
+            ctx.stroke();
+
+            function drawSideWinding(aStart, aEnd, turns, baseColor, altColor, shineColor) {
+                for (let i = 0; i < turns; i++) {
+                    const t = turns === 1 ? 0.5 : i / (turns - 1);
+                    const a = aStart + (aEnd - aStart) * t;
+                    const x1 = cx + Math.cos(a) * (innerR + 2);
+                    const y1 = cy + Math.sin(a) * (innerR + 2);
+                    const x2 = cx + Math.cos(a) * (outerR - 2);
+                    const y2 = cy + Math.sin(a) * (outerR - 2);
+
+                    ctx.strokeStyle = i % 2 === 0 ? baseColor : altColor;
+                    ctx.lineWidth = 3.8;
+                    ctx.beginPath();
+                    ctx.moveTo(x1, y1);
+                    ctx.lineTo(x2, y2);
+                    ctx.stroke();
+
+                    ctx.strokeStyle = shineColor;
+                    ctx.lineWidth = 1.15;
+                    ctx.beginPath();
+                    ctx.moveTo(cx + Math.cos(a + 0.018) * (innerR + 8), cy + Math.sin(a + 0.018) * (innerR + 8));
+                    ctx.lineTo(cx + Math.cos(a + 0.018) * (outerR - 12), cy + Math.sin(a + 0.018) * (outerR - 12));
+                    ctx.stroke();
+                }
+            }
+
+            // Two independent coils: left side for primary, right side for secondary.
+            drawSideWinding(Math.PI * 0.62, Math.PI * 1.38, leftTurns, '#de9346', '#b96a29', 'rgba(255,223,173,0.42)');
+            drawSideWinding(-Math.PI * 0.38, Math.PI * 0.38, rightTurns, '#9cccf0', '#6eaedc', 'rgba(210,240,255,0.42)');
+
+            const leftTop = { x: cx - outerR - 10, y: cy - 32 };
+            const leftBottom = { x: cx - outerR - 10, y: cy + 32 };
+            const rightTop = { x: cx + outerR + 10, y: cy - 32 };
+            const rightBottom = { x: cx + outerR + 10, y: cy + 32 };
+
+            ctx.strokeStyle = '#d8b35f';
+            ctx.lineWidth = 2.2;
+            ctx.beginPath();
+            ctx.moveTo(cx - outerR + 2, cy - 32);
+            ctx.lineTo(leftTop.x, leftTop.y);
+            ctx.moveTo(cx - outerR + 2, cy + 32);
+            ctx.lineTo(leftBottom.x, leftBottom.y);
+            ctx.stroke();
+
+            ctx.strokeStyle = '#8ec8f2';
+            ctx.beginPath();
+            ctx.moveTo(cx + outerR - 2, cy - 32);
+            ctx.lineTo(rightTop.x, rightTop.y);
+            ctx.moveTo(cx + outerR - 2, cy + 32);
+            ctx.lineTo(rightBottom.x, rightBottom.y);
+            ctx.stroke();
+
+            ctx.fillStyle = '#d6b978';
+            ctx.beginPath();
+            ctx.arc(leftTop.x, leftTop.y, 3.4, 0, Math.PI * 2);
+            ctx.arc(leftBottom.x, leftBottom.y, 3.4, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#9fcdf0';
+            ctx.beginPath();
+            ctx.arc(rightTop.x, rightTop.y, 3.4, 0, Math.PI * 2);
+            ctx.arc(rightBottom.x, rightBottom.y, 3.4, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#9ab8d8';
+            ctx.font = '12px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('حلقة حديد مغلقة مع ملفين منفصلين', cx, cy + 120);
+
+            return {
+                leftTop,
+                leftBottom,
+                rightTop,
+                rightBottom
+            };
+        }
+
+        function drawWiringAndLabels(coilAnchors) {
+            const cx = W * 0.5;
+            const cy = H * 0.52;
+
+            const topY = cy - 34;
+            const glow = clamp(Math.abs(state.iPrimary) / 2.8, 0, 0.7);
+
+            const battery = drawBattery(cx - 410, topY - 6);
+            const sw = drawSwitch(cx - 300, topY + 3);
+            const galv = drawGalvanometer(cx + 390, topY + 2);
+
+            // Primary circuit: battery -> switch -> left coil, return to battery negative.
+            drawWire([
+                [battery.positive.x, battery.positive.y],
+                [sw.leftContact.x, battery.positive.y],
+                [sw.leftContact.x, sw.leftContact.y]
+            ], '#d8b35f', glow);
+
+            drawWire([
+                [sw.rightContact.x, sw.rightContact.y],
+                [coilAnchors.leftTop.x - 42, sw.rightContact.y],
+                [coilAnchors.leftTop.x - 42, coilAnchors.leftTop.y],
+                [coilAnchors.leftTop.x, coilAnchors.leftTop.y]
+            ], '#d8b35f', glow);
+
+            drawWire([
+                [coilAnchors.leftBottom.x, coilAnchors.leftBottom.y],
+                [coilAnchors.leftBottom.x - 58, coilAnchors.leftBottom.y],
+                [coilAnchors.leftBottom.x - 58, cy + 98],
+                [battery.negative.x, cy + 98],
+                [battery.negative.x, battery.negative.y]
+            ], '#d8b35f', glow);
+
+            const secGlow = clamp(Math.abs(state.emfSecondary) * 0.5, 0, 0.6);
+            // Secondary circuit: right coil <-> galvanometer.
+            drawWire([
+                [coilAnchors.rightTop.x, coilAnchors.rightTop.y],
+                [galv.topTerminal.x - 36, coilAnchors.rightTop.y],
+                [galv.topTerminal.x - 36, galv.topTerminal.y],
+                [galv.topTerminal.x, galv.topTerminal.y]
+            ], '#8ec8f2', secGlow);
+
+            drawWire([
+                [coilAnchors.rightBottom.x, coilAnchors.rightBottom.y],
+                [galv.bottomTerminal.x - 36, coilAnchors.rightBottom.y],
+                [galv.bottomTerminal.x - 36, galv.bottomTerminal.y],
+                [galv.bottomTerminal.x, galv.bottomTerminal.y]
+            ], '#8ec8f2', secGlow);
+
+            ctx.fillStyle = '#ffd166';
+            ctx.font = '12px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('دائرة الملف الابتدائي', cx - 250, cy + 66);
+
+            ctx.fillStyle = '#9ad1ff';
+            ctx.fillText('دائرة الملف الثانوي', cx + 250, cy + 66);
+        }
+
+        function drawGalvanometer(cx, cy) {
+            const w = 90;
+            const h = 82;
+            roundRect(cx - w / 2, cy - h / 2, w, h, 8);
+            ctx.fillStyle = '#c8d6de';
+            ctx.fill();
+            ctx.strokeStyle = '#6d7f8d';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            ctx.strokeStyle = '#2f3c48';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.arc(cx, cy + 6, 24, Math.PI, 0);
+            ctx.stroke();
+
+            for (let i = -4; i <= 4; i++) {
+                const t = (i / 4) * (Math.PI / 2);
+                const rx = cx + Math.sin(t) * 24;
+                const ry = cy + 6 - Math.cos(t) * 24;
+                const tx = cx + Math.sin(t) * 28;
+                const ty = cy + 6 - Math.cos(t) * 28;
+                ctx.beginPath();
+                ctx.moveTo(rx, ry);
+                ctx.lineTo(tx, ty);
+                ctx.stroke();
+            }
+
+            const angle = clamp(state.needle, -1, 1) * (Math.PI / 2.3);
+            const nx = cx + Math.sin(angle) * 22;
+            const ny = cy + 6 - Math.cos(angle) * 22;
+            ctx.strokeStyle = '#e25757';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(cx, cy + 6);
+            ctx.lineTo(nx, ny);
+            ctx.stroke();
+
+            ctx.fillStyle = '#2f3c48';
+            ctx.beginPath();
+            ctx.arc(cx, cy + 6, 3, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#2f3c48';
+            ctx.font = '11px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('جلفانومتر', cx, cy + 33);
+
+            const topTerminal = { x: cx - w / 2 - 8, y: cy - 10 };
+            const bottomTerminal = { x: cx - w / 2 - 8, y: cy + 25 };
+
+            ctx.fillStyle = '#6b7f90';
+            ctx.beginPath();
+            ctx.arc(topTerminal.x, topTerminal.y, 4, 0, Math.PI * 2);
+            ctx.arc(bottomTerminal.x, bottomTerminal.y, 4, 0, Math.PI * 2);
+            ctx.fill();
+
+            return { topTerminal, bottomTerminal };
+        }
+
+        function drawFluxHint() {
+            const cx = W * 0.5;
+            const cy = H * 0.52;
+            const amp = Math.abs(state.emfSecondary);
+            const alpha = clamp(0.08 + amp * 0.9, 0.08, 0.55);
+
+            ctx.strokeStyle = `rgba(136,255,136,${alpha})`;
+            ctx.lineWidth = 2;
+            for (let i = 0; i < 5; i++) {
+                const rr = 42 + i * 10;
+                ctx.beginPath();
+                ctx.arc(cx, cy, rr, Math.PI * 0.1, Math.PI * 0.9);
+                ctx.stroke();
+            }
+
+            if (amp > 0.03) {
+                ctx.fillStyle = '#88ff88';
+                ctx.font = 'bold 13px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('تغير في الفيض -> تيار مستحث', cx, cy - 118);
+            } else {
+                ctx.fillStyle = '#99aacc';
+                ctx.font = 'bold 13px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('فيض ثابت -> لا انحراف مستمر', cx, cy - 118);
+            }
+        }
+
+        function updatePhysics() {
+            const batteryV = parseFloat(batteryEl.value);
+            const nP = parseFloat(nPrimaryEl.value);
+            const nS = parseFloat(nSecondaryEl.value);
+            const k = parseFloat(couplingEl.value);
+
+            const targetI = state.switchClosed ? batteryV / 6 : 0;
+            const tau = state.switchClosed ? 0.2 : 0.14;
+            const approach = 1 - Math.exp(-DT / tau);
+            state.iPrimary += (targetI - state.iPrimary) * approach;
+
+            if (state.pulseTime > 0) {
+                state.pulseTime -= DT;
+                const pulseKick = Math.sin((state.pulseTime / 0.16) * Math.PI) * 0.35;
+                state.iPrimary += pulseKick;
+            }
+
+            const dI = (state.iPrimary - state.prevI) / DT;
+            const mCoef = 0.0038 * (nP / 200) * (nS / 200) * k;
+            state.emfSecondary = -mCoef * dI;
+
+            // Galvanometer deflects only when emf exists, then returns toward zero.
+            const needleTarget = clamp(state.emfSecondary * 8.5, -1, 1);
+            state.needle += (needleTarget - state.needle) * 0.28;
+            state.needle *= 0.985;
+
+            state.prevI = state.iPrimary;
+
+            switchStateVal.textContent = state.switchClosed ? 'مغلق' : 'مفتوح';
+            iPrimaryVal.textContent = `${state.iPrimary.toFixed(2)} A`;
+            diVal.textContent = `${dI.toFixed(2)} A/s`;
+            emfVal.textContent = `${state.emfSecondary.toFixed(2)} V`;
+            needleVal.textContent = state.needle.toFixed(2);
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, W, H);
+            drawGrid();
+            const coilAnchors = drawToroid(W * 0.5, H * 0.52);
+            drawWiringAndLabels(coilAnchors);
+            drawFluxHint();
+
+            ctx.fillStyle = '#ffaa44';
+            ctx.font = 'bold 13px Arial';
+            ctx.textAlign = 'right';
+            ctx.fillText(
+                state.switchClosed ? 'عند استقرار التيار بعد الإغلاق يعود المؤشر للصفر تقريباً' : 'افتح/اغلق المفتاح لتوليد انحراف لحظي بالمؤشر',
+                W - 16,
+                16
+            );
+        }
+
+        function loop() {
+            updatePhysics();
+            draw();
+            requestAnimationFrame(loop);
+        }
+
+        function syncSwitchButton() {
+            toggleSwitchBtn.textContent = state.switchClosed ? 'فتح المفتاح' : 'إغلاق المفتاح';
+            toggleSwitchBtn.classList.toggle('switch-on', state.switchClosed);
+        }
+
+        toggleSwitchBtn.addEventListener('click', () => {
+            state.switchClosed = !state.switchClosed;
+            syncSwitchButton();
+        });
+
+        pulseBtn.addEventListener('click', () => {
+            state.pulseTime = 0.16;
+        });
+
+        resetBtn.addEventListener('click', () => {
+            state.switchClosed = false;
+            state.iPrimary = 0;
+            state.prevI = 0;
+            state.emfSecondary = 0;
+            state.needle = 0;
+            state.pulseTime = 0;
+            syncSwitchButton();
+        });
+
+        syncSwitchButton();
+        loop();
+    </script>
+</body>
+
+</html>

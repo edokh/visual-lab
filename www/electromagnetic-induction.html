@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>تجربة الحث الكهرومغناطيسي</title>
+    <link rel="stylesheet" href="css/back-nav.css" />
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #0f0f1a;
+            color: #e0e0e0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 0;
+            margin: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        h1 {
+            font-size: 1.2rem;
+            margin: 0 0 8px 0;
+            color: #88ccff;
+            flex-shrink: 0;
+        }
+
+        .lab-container {
+            background: #1a1a2e;
+            border-radius: 0;
+            padding: 15px;
+            box-shadow: none;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            flex: 1;
+            background: #111122;
+            border-radius: 0;
+            cursor: grab;
+            border: 1px solid #2a2a4a;
+            min-height: 0;
+        }
+
+        canvas.dragging {
+            cursor: grabbing;
+        }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px 20px;
+            margin-top: 8px;
+            align-items: center;
+            background: #141428;
+            padding: 10px 12px;
+            border-radius: 0;
+            border: 1px solid #2a2a4a;
+            flex-shrink: 0;
+            font-size: 0.75rem;
+        }
+
+        .controls label {
+            font-size: 0.85rem;
+            color: #aaa;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .controls input[type="range"] {
+            width: 110px;
+            accent-color: #4a8cff;
+        }
+
+        .btn {
+            background: #2a4a8a;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 6px 16px;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            background: #3a6aaa;
+        }
+
+        .btn.reset {
+            background: #6a2a3a;
+        }
+
+        .btn.reset:hover {
+            background: #8a3a5a;
+        }
+
+        .info {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px 24px;
+            margin-top: 6px;
+            font-size: 0.7rem;
+            color: #99aacc;
+            flex-shrink: 0;
+        }
+
+        .info span {
+            background: #1a1a30;
+            padding: 4px 12px;
+            border-radius: 6px;
+        }
+
+        .info .val {
+            color: #88ddff;
+            font-weight: 600;
+        }
+
+        .legend {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            font-size: 0.7rem;
+            margin-top: 4px;
+            flex-shrink: 0;
+        }
+
+        .legend-dot {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 4px;
+            vertical-align: middle;
+        }
+    </style>
+</head>
+
+<body>
+    <a class="vl-back" href="index.html" aria-label="العودة">
+        <span class="vl-back__icon">&#8592;</span>
+        <span>رجوع</span>
+    </a>
+    <div class="lab-container">
+        <h1>🧲 تجربة الحث الكهرومغناطيسي (ملف + أمبير)</h1>
+        <canvas id="simCanvas" width="1000" height="600"></canvas>
+
+        <div class="controls">
+            <label>عدد لفات الملف
+                <input type="range" id="turns" min="20" max="300" value="120">
+            </label>
+
+            <label>شدة المغناطيس
+                <input type="range" id="magStrength" min="20" max="200" value="120">
+            </label>
+
+            <label>المقاومة (أوم)
+                <input type="range" id="resistance" min="1" max="50" value="12">
+            </label>
+
+            <label>
+                <input type="checkbox" id="showFlux" checked> إظهار خطوط الفيض
+            </label>
+
+            <button class="btn" id="centerBtn">إرجاع المغناطيس</button>
+            <button class="btn reset" id="resetBtn">تصفير القراءة</button>
+        </div>
+
+        <div class="info">
+            <span>Φ عبر الملف: <span class="val" id="fluxVal">0.000</span></span>
+            <span>dΦ/dt: <span class="val" id="dFluxVal">0.000</span></span>
+            <span>القوة الدافعة (V): <span class="val" id="emfVal">0.000</span></span>
+            <span>شدة التيار (A): <span class="val" id="currentVal">0.000</span></span>
+            <span>اتجاه التيار: <span class="val" id="dirVal">لا يوجد</span></span>
+        </div>
+
+        <div class="legend">
+            <span><span class="legend-dot" style="background:#ffd166;"></span> مغناطيس</span>
+            <span><span class="legend-dot" style="background:#9ad1ff;"></span> ملف</span>
+            <span><span class="legend-dot" style="background:#88ff88;"></span> قراءة الأمبير</span>
+            <span style="color:#ffaa44;">اسحب المغناطيس أفقياً نحو الملف أو بعيداً عنه</span>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('simCanvas');
+        const ctx = canvas.getContext('2d');
+        const W = canvas.width;
+        const H = canvas.height;
+
+        const turnsEl = document.getElementById('turns');
+        const magStrengthEl = document.getElementById('magStrength');
+        const resistanceEl = document.getElementById('resistance');
+        const showFluxEl = document.getElementById('showFlux');
+        const centerBtn = document.getElementById('centerBtn');
+        const resetBtn = document.getElementById('resetBtn');
+
+        const fluxVal = document.getElementById('fluxVal');
+        const dFluxVal = document.getElementById('dFluxVal');
+        const emfVal = document.getElementById('emfVal');
+        const currentVal = document.getElementById('currentVal');
+        const dirVal = document.getElementById('dirVal');
+
+        const coil = {
+            x: W * 0.74,
+            y: H * 0.62,
+            radius: 32,
+            turns: 10
+        };
+
+        const magnet = {
+            x: W * 0.28,
+            y: H * 0.62,
+            w: 150,
+            h: 56
+        };
+
+        const state = {
+            dragging: false,
+            dragOffsetX: 0,
+            prevFlux: 0,
+            flux: 0,
+            dFluxDt: 0,
+            emf: 0,
+            current: 0,
+            smoothCurrent: 0,
+            dirLabel: 'لا يوجد'
+        };
+
+        const DT = 1 / 60;
+
+        function clamp(v, min, max) {
+            return Math.max(min, Math.min(max, v));
+        }
+
+        function distanceMagnetToCoil() {
+            const northFaceX = magnet.x + magnet.w;
+            return Math.max(6, coil.x - northFaceX);
+        }
+
+        function computeFlux() {
+            const turns = parseFloat(turnsEl.value);
+            const m = parseFloat(magStrengthEl.value) / 100;
+            const d = distanceMagnetToCoil();
+            const geometricDrop = 1 / (1 + Math.pow(d / 120, 2));
+            const flux = m * geometricDrop;
+            return flux * (turns / 100);
+        }
+
+        function updatePhysics() {
+            const R = parseFloat(resistanceEl.value);
+            state.flux = computeFlux();
+            state.dFluxDt = (state.flux - state.prevFlux) / DT;
+            state.emf = -state.dFluxDt;
+            state.current = state.emf / R;
+            state.smoothCurrent += (state.current - state.smoothCurrent) * 0.2;
+            state.prevFlux = state.flux;
+
+            const iAbs = Math.abs(state.smoothCurrent);
+            if (iAbs < 0.002) {
+                state.dirLabel = 'لا يوجد (سكون)';
+            } else if (state.smoothCurrent > 0) {
+                state.dirLabel = 'عكس عقارب الساعة';
+            } else {
+                state.dirLabel = 'مع عقارب الساعة';
+            }
+        }
+
+        function drawGrid() {
+            ctx.strokeStyle = '#1a1a30';
+            ctx.lineWidth = 0.5;
+            for (let x = 0; x <= W; x += 50) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, H);
+                ctx.stroke();
+            }
+            for (let y = 0; y <= H; y += 50) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(W, y);
+                ctx.stroke();
+            }
+        }
+
+        function drawCoil() {
+            const loops = 8;
+            const loopGap = 13;
+            const totalW = loops * loopGap;
+            const startX = coil.x - totalW / 2;
+
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = '#9ad1ff';
+            for (let i = 0; i < loops; i++) {
+                const x = startX + i * loopGap;
+                ctx.beginPath();
+                ctx.ellipse(x, coil.y, 8, 26, 0, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+
+            ctx.strokeStyle = '#c0dcff';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(startX - 10, coil.y - 28);
+            ctx.lineTo(startX - 10, 130);
+            ctx.lineTo(W * 0.62, 130);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(startX + totalW + 10, coil.y - 28);
+            ctx.lineTo(startX + totalW + 10, 130);
+            ctx.lineTo(W * 0.78, 130);
+            ctx.stroke();
+
+            ctx.fillStyle = '#99b8e0';
+            ctx.font = '12px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('ملف', coil.x, coil.y + 52);
+        }
+
+        function drawAmmeter() {
+            const ax = W * 0.7;
+            const ay = 62;
+            const aw = 160;
+            const ah = 94;
+
+            ctx.fillStyle = '#c9d6df';
+            ctx.strokeStyle = '#778899';
+            ctx.lineWidth = 2;
+            roundRect(ax - aw / 2, ay - ah / 2, aw, ah, 12);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.fillStyle = '#1e2330';
+            roundRect(ax - 52, ay - 30, 104, 34, 6);
+            ctx.fill();
+
+            const displayValue = state.smoothCurrent;
+            const absValue = Math.abs(displayValue);
+            const sign = displayValue >= 0 ? '+' : '-';
+            ctx.fillStyle = '#94f5a5';
+            ctx.font = 'bold 20px Consolas';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(`${sign}${absValue.toFixed(2)}`, ax, ay - 13);
+
+            ctx.fillStyle = '#364a5a';
+            ctx.font = '12px Arial';
+            ctx.fillText('A', ax + 44, ay - 13);
+            ctx.fillText('أمبير رقمي', ax, ay + 22);
+        }
+
+        function drawMagnet() {
+            const x = magnet.x;
+            const y = magnet.y;
+            const w = magnet.w;
+            const h = magnet.h;
+
+            const grad = ctx.createLinearGradient(x, y, x + w, y);
+            grad.addColorStop(0, '#9ca3af');
+            grad.addColorStop(0.48, '#b9c0c9');
+            grad.addColorStop(0.52, '#eab308');
+            grad.addColorStop(1, '#fcd34d');
+
+            roundRect(x, y - h / 2, w, h, 10);
+            ctx.fillStyle = grad;
+            ctx.fill();
+            ctx.strokeStyle = '#4b5563';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            ctx.fillStyle = '#273040';
+            ctx.font = 'bold 16px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('S', x + w * 0.2, y);
+            ctx.fillText('N', x + w * 0.82, y);
+
+            ctx.fillStyle = '#a5b4fc';
+            ctx.font = '12px Arial';
+            ctx.fillText('مغناطيس', x + w / 2, y + h * 0.9);
+        }
+
+        function drawFluxLines() {
+            if (!showFluxEl.checked) return;
+
+            const northFaceX = magnet.x + magnet.w;
+            const gap = coil.x - northFaceX;
+            const intensity = clamp(1 - gap / 420, 0, 1);
+            const alpha = 0.06 + 0.34 * intensity;
+
+            ctx.strokeStyle = `rgba(110,190,255,${alpha})`;
+            ctx.lineWidth = 1.5;
+
+            for (let i = -3; i <= 3; i++) {
+                const yOffset = i * 18;
+                ctx.beginPath();
+                ctx.moveTo(northFaceX, magnet.y + yOffset);
+                ctx.bezierCurveTo(
+                    northFaceX + 70,
+                    magnet.y + yOffset - 20,
+                    coil.x - 70,
+                    coil.y + yOffset - 20,
+                    coil.x,
+                    coil.y + yOffset
+                );
+                ctx.stroke();
+            }
+        }
+
+        function drawInducedDirection() {
+            const a = Math.abs(state.smoothCurrent);
+            if (a < 0.002) return;
+
+            const r = 44;
+            const clockwise = state.smoothCurrent < 0;
+            const start = clockwise ? Math.PI * 0.2 : Math.PI * 1.2;
+            const end = clockwise ? Math.PI * 1.75 : Math.PI * 0.75;
+            const arrowColor = 'rgba(136,255,136,0.85)';
+
+            ctx.beginPath();
+            ctx.arc(coil.x, coil.y, r, start, end, !clockwise);
+            ctx.strokeStyle = arrowColor;
+            ctx.lineWidth = 2.2;
+            ctx.stroke();
+
+            const tipAngle = end;
+            const tx = coil.x + Math.cos(tipAngle) * r;
+            const ty = coil.y + Math.sin(tipAngle) * r;
+            const dir = clockwise ? 1 : -1;
+            const ux = Math.cos(tipAngle + dir * 0.18);
+            const uy = Math.sin(tipAngle + dir * 0.18);
+            const vx = Math.cos(tipAngle - dir * 0.18);
+            const vy = Math.sin(tipAngle - dir * 0.18);
+
+            ctx.beginPath();
+            ctx.moveTo(tx, ty);
+            ctx.lineTo(tx - ux * 12, ty - uy * 12);
+            ctx.lineTo(tx - vx * 12, ty - vy * 12);
+            ctx.closePath();
+            ctx.fillStyle = arrowColor;
+            ctx.fill();
+        }
+
+        function drawHints() {
+            const gap = distanceMagnetToCoil();
+            const near = gap < 120;
+
+            ctx.fillStyle = '#ffaa44';
+            ctx.font = 'bold 13px Arial';
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'top';
+
+            if (Math.abs(state.smoothCurrent) < 0.002) {
+                ctx.fillText('عند سكون المغناطيس: القراءة ~ 0 A', W - 16, 16);
+            } else if (state.smoothCurrent > 0) {
+                ctx.fillText('المغناطيس يقترب/الفيض يزداد: تيار مستحث موجب', W - 16, 16);
+            } else {
+                ctx.fillText('المغناطيس يبتعد/الفيض ينقص: تيار مستحث سالب', W - 16, 16);
+            }
+
+            ctx.fillStyle = near ? '#88ddff' : '#99aacc';
+            ctx.fillText(near ? 'المغناطيس قريب من الملف' : 'حرّك المغناطيس نحو الملف لزيادة التأثير', W - 16, 36);
+        }
+
+        function roundRect(x, y, w, h, r) {
+            const rr = Math.min(r, w / 2, h / 2);
+            ctx.beginPath();
+            ctx.moveTo(x + rr, y);
+            ctx.arcTo(x + w, y, x + w, y + h, rr);
+            ctx.arcTo(x + w, y + h, x, y + h, rr);
+            ctx.arcTo(x, y + h, x, y, rr);
+            ctx.arcTo(x, y, x + w, y, rr);
+            ctx.closePath();
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, W, H);
+            drawGrid();
+            drawAmmeter();
+            drawFluxLines();
+            drawCoil();
+            drawMagnet();
+            drawInducedDirection();
+            drawHints();
+
+            fluxVal.textContent = state.flux.toFixed(3);
+            dFluxVal.textContent = state.dFluxDt.toFixed(3);
+            emfVal.textContent = state.emf.toFixed(3);
+            currentVal.textContent = state.smoothCurrent.toFixed(3);
+            dirVal.textContent = state.dirLabel;
+        }
+
+        function loop() {
+            updatePhysics();
+            draw();
+            requestAnimationFrame(loop);
+        }
+
+        function pointerXFromEvent(e) {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            return (e.clientX - rect.left) * scaleX;
+        }
+
+        function magnetBoundsClamp(x) {
+            const minX = 20;
+            const maxX = coil.x - magnet.w - 10;
+            return clamp(x, minX, maxX);
+        }
+
+        canvas.addEventListener('pointerdown', (e) => {
+            const px = pointerXFromEvent(e);
+            const insideX = px >= magnet.x && px <= magnet.x + magnet.w;
+            const py = (e.clientY - canvas.getBoundingClientRect().top) * (canvas.height / canvas.getBoundingClientRect().height);
+            const insideY = py >= magnet.y - magnet.h / 2 && py <= magnet.y + magnet.h / 2;
+            if (!insideX || !insideY) return;
+
+            state.dragging = true;
+            state.dragOffsetX = px - magnet.x;
+            canvas.classList.add('dragging');
+            canvas.setPointerCapture(e.pointerId);
+        });
+
+        canvas.addEventListener('pointermove', (e) => {
+            if (!state.dragging) return;
+            const px = pointerXFromEvent(e);
+            magnet.x = magnetBoundsClamp(px - state.dragOffsetX);
+        });
+
+        function stopDragging(e) {
+            if (!state.dragging) return;
+            state.dragging = false;
+            canvas.classList.remove('dragging');
+            if (typeof e.pointerId === 'number') {
+                canvas.releasePointerCapture(e.pointerId);
+            }
+        }
+
+        canvas.addEventListener('pointerup', stopDragging);
+        canvas.addEventListener('pointercancel', stopDragging);
+        canvas.addEventListener('pointerleave', stopDragging);
+
+        centerBtn.addEventListener('click', () => {
+            magnet.x = W * 0.28;
+        });
+
+        resetBtn.addEventListener('click', () => {
+            state.prevFlux = computeFlux();
+            state.flux = state.prevFlux;
+            state.dFluxDt = 0;
+            state.emf = 0;
+            state.current = 0;
+            state.smoothCurrent = 0;
+            state.dirLabel = 'لا يوجد';
+        });
+
+        // Prepare initial flux state so the first frame does not produce a false pulse.
+        state.prevFlux = computeFlux();
+        state.flux = state.prevFlux;
+        loop();
+    </script>
+</body>
+
+</html>
