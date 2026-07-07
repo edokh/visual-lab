@@ -166,23 +166,13 @@
         <div class="controls">
             <label>الحقل:
                 <select id="fieldMode">
-                    <option value="E_parallel">E ∥ (متوازي)</option>
-                    <option value="E_perp">E ⟂ (عمودي)</option>
-                    <option value="B_parallel">B ∥ (متوازي)</option>
-                    <option value="B_perp">B ⟂ (عمودي)</option>
-                </select>
-            </label>
-
-            <label>الاتجاه:
-                <select id="fieldDirection">
-                    <option value="1">← → (يمين/خارج)</option>
-                    <option value="-1">→ ← (يسار/داخل)</option>
+                    <option value="E">E</option>
+                    <option value="B">B</option>
                 </select>
             </label>
 
             <label>عرض المغناطيسي:
                 <select id="magneticView">
-                    <option value="inout">داخل/خارج الصفحة</option>
                     <option value="leftright">يسار/يمين</option>
                 </select>
             </label>
@@ -192,11 +182,11 @@
             </label>
 
             <label>سرعة الجسيم
-                <input type="range" id="particleSpeed" min="10" max="300" value="120">
+                <input type="range" id="particleSpeed" min="10" max="300" value="10">
             </label>
 
             <label>سرعة الحركة
-                <input type="range" id="animationSpeed" min="0.1" max="2" step="0.1" value="1">
+                <input type="range" id="animationSpeed" min="0.1" max="2" step="0.1" value="0.1">
             </label>
 
             <label>الشحنة:
@@ -233,7 +223,6 @@
         const W = canvas.width, H = canvas.height;
 
         const fieldMode = document.getElementById('fieldMode');
-        const fieldDirection = document.getElementById('fieldDirection');
         const magneticView = document.getElementById('magneticView');
         const fieldStrength = document.getElementById('fieldStrength');
         const particleSpeed = document.getElementById('particleSpeed');
@@ -247,18 +236,28 @@
         const velDisplay = document.getElementById('velDisplay');
         const keDisplay = document.getElementById('keDisplay');
 
-        const DT = 0.4;
-        const Q_OVER_M = 0.03;
+        const DT = 4;
+        const Q_OVER_M = 0.05;
         const DAMP = 0.998;
+        const CHARGE_AFFINITY_E = 0.01;
+        const CHARGE_AFFINITY_B = 0.008;
+
+        // Textbook-style helix visualization parameters (B mode only).
+        const MAG_TOP_PAD = 0;
+        const MAG_BOTTOM_PAD = 250;
+        const MAG_LEFT_INNER = 60;
+        const MAG_RIGHT_INNER = 940;
+        const HELIX_RADIUS_MARGIN = 14;
+        const HELIX_TURNS_TARGET = 10;
 
         let particles = [];
         let running = false;
         let animId = null;
 
         class Particle {
-            constructor(x, y, vx, vy, charge) {
-                this.x = x; this.y = y;
-                this.vx = vx; this.vy = vy;
+            constructor(x, y, z, vx, vy, vz, charge) {
+                this.x = x; this.y = y; this.z = z;
+                this.vx = vx; this.vy = vy; this.vz = vz;
                 this.charge = charge;
                 this.trail = [];
                 this.maxTrail = 400;
@@ -266,24 +265,52 @@
             }
 
             pushTrail() {
-                this.trail.push({ x: this.x, y: this.y });
+                this.trail.push(project3D(this.x, this.y, this.z));
                 if (this.trail.length > this.maxTrail) this.trail.shift();
             }
 
-            update(ex, ey, bx, by, bz) {
+            update(ex, ey, ez, bx, by, bz, extraAx = 0, extraAy = 0, extraAz = 0) {
                 const q = this.charge;
                 const effectiveDT = DT * parseFloat(animationSpeed.value);
-                const ax = q * Q_OVER_M * (ex + this.vy * bz - 0 * by);
-                const ay = q * Q_OVER_M * (ey + 0 * bx - this.vx * bz);
+
+                if (fieldMode.value === 'B') {
+                    const vyPrev = this.vy;
+                    const vzPrev = this.vz;
+                    const omega = q * Q_OVER_M * bx;
+                    const theta = omega * effectiveDT;
+                    const c = Math.cos(theta);
+                    const s = Math.sin(theta);
+
+                    // Exact rotation in the y-z plane for B along x keeps |v_perp| constant.
+                    this.vy = vyPrev * c + vzPrev * s;
+                    this.vz = vzPrev * c - vyPrev * s;
+
+                    this.x += this.vx * effectiveDT;
+                    this.y += 0.5 * (vyPrev + this.vy) * effectiveDT;
+                    this.z += 0.5 * (vzPrev + this.vz) * effectiveDT;
+
+                    if (this.x < -250 || this.x > W + 250 || this.y < -250 || this.y > H + 250 || Math.abs(this.z) > 600) {
+                        this.alive = false;
+                    }
+                    return;
+                }
+
+                const ax = q * Q_OVER_M * (ex + this.vy * bz - this.vz * by) + extraAx;
+                const ay = q * Q_OVER_M * (ey + this.vz * bx - this.vx * bz) + extraAy;
+                const az = q * Q_OVER_M * (ez + this.vx * by - this.vy * bx) + extraAz;
 
                 this.vx += ax * effectiveDT;
                 this.vy += ay * effectiveDT;
-                this.vx *= DAMP;
-                this.vy *= DAMP;
+                this.vz += az * effectiveDT;
+                const damp = fieldMode.value === 'B' ? 1 : DAMP;
+                this.vx *= damp;
+                this.vy *= damp;
+                this.vz *= damp;
                 this.x += this.vx * effectiveDT;
                 this.y += this.vy * effectiveDT;
+                this.z += this.vz * effectiveDT;
 
-                if (this.x < -200 || this.x > W + 200 || this.y < -200 || this.y > H + 200) {
+                if (this.x < -250 || this.x > W + 250 || this.y < -250 || this.y > H + 250 || Math.abs(this.z) > 600) {
                     this.alive = false;
                 }
             }
@@ -300,18 +327,20 @@
                     ctx.stroke();
                 }
 
-                const grad = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, 20);
+                const p2 = project3D(this.x, this.y, this.z);
+
+                const grad = ctx.createRadialGradient(p2.x, p2.y, 0, p2.x, p2.y, 20);
                 const col = this.charge > 0 ? '255,100,100' : '100,180,255';
                 grad.addColorStop(0, `rgba(${col},1)`);
                 grad.addColorStop(0.4, `rgba(${col},0.7)`);
                 grad.addColorStop(1, `rgba(${col},0)`);
                 ctx.beginPath();
-                ctx.arc(this.x, this.y, 20, 0, Math.PI * 2);
+                ctx.arc(p2.x, p2.y, 20, 0, Math.PI * 2);
                 ctx.fillStyle = grad;
                 ctx.fill();
 
                 ctx.beginPath();
-                ctx.arc(this.x, this.y, 6, 0, Math.PI * 2);
+                ctx.arc(p2.x, p2.y, 6, 0, Math.PI * 2);
                 ctx.fillStyle = this.charge > 0 ? '#ff6666' : '#66bbff';
                 ctx.fill();
                 ctx.strokeStyle = '#fff';
@@ -322,32 +351,38 @@
                 ctx.font = 'bold 10px Arial';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
-                ctx.fillText(this.charge > 0 ? '+' : '−', this.x, this.y);
+                ctx.fillText(this.charge > 0 ? '+' : '−', p2.x, p2.y);
             }
+        }
+
+        function project3D(x, y, z) {
+            return {
+                // Isometric-like projection: x-axis goes right, z contributes diagonal depth.
+                x: x + z * 0.52,
+                y: y - z * 0.30
+            };
         }
 
         function getField(mode, strength, direction) {
             const s = strength * 0.01 * parseFloat(direction);
             switch (mode) {
-                case 'E_parallel': return { ex: s, ey: 0, bx: 0, by: 0, bz: 0 };
-                case 'E_perp': return { ex: 0, ey: s, bx: 0, by: 0, bz: 0 };
-                case 'B_parallel': return { ex: 0, ey: 0, bx: 0, by: 0, bz: -s };
-                case 'B_perp': return { ex: 0, ey: 0, bx: 0, by: 0, bz: s };
+                case 'E': return { ex: s, ey: 0, ez: 0, bx: 0, by: 0, bz: 0 };
+                case 'B': return { ex: 0, ey: 0, ez: 0, bx: s, by: 0, bz: 0 };
+                default: return { ex: 0, ey: 0, ez: 0, bx: 0, by: 0, bz: 0 };
             }
         }
 
-        function drawFieldIndicators(mode, strength, direction, magView) {
+        function drawFieldIndicators(mode, strength, magView) {
             const s = Math.min(strength / 200, 1);
             const alpha = 0.15 + s * 0.35;
             const spacing = 50;
-            const dir = parseInt(direction);
+            const dir = 1;
             const isMagnetic = mode.startsWith('B');
-            const baseBzSign = mode === 'B_parallel' ? -1 : 1;
-            const effectiveBzSign = baseBzSign * dir;
+            const fieldDirSign = 1;
 
             ctx.save();
             switch (mode) {
-                case 'E_parallel':
+                case 'E':
                     for (let y = 40; y < H; y += spacing) {
                         for (let x = 40; x < W - 40; x += spacing * 2) {
                             if (dir > 0) {
@@ -358,61 +393,21 @@
                         }
                     }
                     break;
-                case 'E_perp':
-                    for (let x = 40; x < W; x += spacing) {
-                        for (let y = 40; y < H - 40; y += spacing * 2) {
-                            if (dir > 0) {
-                                drawArrow(ctx, x, y, x, y + 30, `rgba(255,170,68,${alpha})`, 2);
-                            } else {
-                                drawArrow(ctx, x, y + 30, x, y, `rgba(255,170,68,${alpha})`, 2);
-                            }
-                        }
-                    }
-                    break;
-                case 'B_parallel':
-                    if (magView === 'leftright') {
-                        drawMagneticPlateArrows(effectiveBzSign, alpha);
-                    } else {
-                        for (let x = 40; x < W; x += spacing) {
-                            for (let y = 40; y < H; y += spacing) {
-                                ctx.font = `${14 + 6 * s}px Arial`;
-                                ctx.fillStyle = `rgba(100,200,255,${alpha})`;
-                                ctx.textAlign = 'center';
-                                ctx.textBaseline = 'middle';
-                                ctx.fillText(effectiveBzSign > 0 ? '⊙' : '⊗', x, y);
-                            }
-                        }
-                    }
-                    break;
-                case 'B_perp':
-                    if (magView === 'leftright') {
-                        drawMagneticPlateArrows(effectiveBzSign, alpha);
-                    } else {
-                        for (let x = 40; x < W; x += spacing) {
-                            for (let y = 40; y < H; y += spacing) {
-                                ctx.font = `${14 + 6 * s}px Arial`;
-                                ctx.fillStyle = `rgba(100,200,255,${alpha})`;
-                                ctx.textAlign = 'center';
-                                ctx.textBaseline = 'middle';
-                                ctx.fillText(effectiveBzSign > 0 ? '⊙' : '⊗', x, y);
-                            }
-                        }
-                    }
+                case 'B':
+                    drawMagneticPlateArrows(fieldDirSign, alpha);
                     break;
             }
 
             if (mode.startsWith('E')) {
                 drawElectricPoles(mode, dir);
-            } else if (magView !== 'leftright') {
-                drawMagneticSidePoles(effectiveBzSign, alpha);
             }
 
             ctx.fillStyle = '#ffaa44';
             ctx.font = 'bold 13px Arial';
             ctx.textAlign = 'left';
             ctx.textBaseline = 'top';
-            if (isMagnetic && magView === 'inout') {
-                ctx.fillText(effectiveBzSign > 0 ? 'اتجاه الحقل: ⊙ خارج الصفحة' : 'اتجاه الحقل: ⊗ داخل الصفحة', 14, 14);
+            if (isMagnetic) {
+                ctx.fillText(fieldDirSign > 0 ? 'اتجاه الحقل المغناطيسي: يمين' : 'اتجاه الحقل المغناطيسي: يسار', 14, 14);
             } else {
                 ctx.fillText(dir > 0 ? 'اتجاه الحقل: يمين' : 'اتجاه الحقل: يسار', 14, 14);
             }
@@ -438,17 +433,11 @@
             const plusColor = 'rgba(255,105,105,0.9)';
             const minusColor = 'rgba(120,180,255,0.9)';
 
-            if (mode === 'E_parallel') {
-                const leftPole = dir > 0 ? '+' : '-';
-                const rightPole = dir > 0 ? '-' : '+';
-                drawPoleTag(26, H / 2, leftPole, leftPole === '+' ? plusColor : minusColor);
-                drawPoleTag(W - 26, H / 2, rightPole, rightPole === '+' ? plusColor : minusColor);
-            } else {
-                const topPole = dir > 0 ? '+' : '-';
-                const bottomPole = dir > 0 ? '-' : '+';
-                drawPoleTag(W / 2, 26, topPole, topPole === '+' ? plusColor : minusColor);
-                drawPoleTag(W / 2, H - 26, bottomPole, bottomPole === '+' ? plusColor : minusColor);
-            }
+            // Keep electric poles on the right/left sides in all electric modes.
+            const leftPole = dir > 0 ? '+' : '-';
+            const rightPole = dir > 0 ? '-' : '+';
+            drawPoleTag(26, H / 2, leftPole, leftPole === '+' ? plusColor : minusColor);
+            drawPoleTag(W - 26, H / 2, rightPole, rightPole === '+' ? plusColor : minusColor);
         }
 
         function drawMagneticSidePoles(dirSign, alpha) {
@@ -473,8 +462,8 @@
         function drawMagneticPlateArrows(dirSign, alpha) {
             const plateW = 20;
             const edgePad = 24;
-            const topPad = 56;
-            const bottomPad = 56;
+            const topPad = 98;
+            const bottomPad = 0;
             const leftX = edgePad;
             const rightX = W - edgePad - plateW;
             const leftPole = dirSign > 0 ? 'N' : 'S';
@@ -524,33 +513,76 @@
             ctx.fill();
         }
 
+        function getTextbookHelixLaunch(charge) {
+            const bMag = Math.max(parseFloat(fieldStrength.value) * 0.01, 0.05);
+            const omega = Math.abs(charge) * Q_OVER_M * bMag;
+            const targetRadius = ((H - MAG_TOP_PAD - MAG_BOTTOM_PAD) / 2) - HELIX_RADIUS_MARGIN;
+            const targetPitch = (MAG_RIGHT_INNER - MAG_LEFT_INNER) / HELIX_TURNS_TARGET;
+
+            return {
+                vx: (targetPitch * omega) / (2 * Math.PI),
+                vy: targetRadius * omega,
+                vz: 0
+            };
+        }
+
         function fireParticle() {
             const mode = fieldMode.value;
             const speed = parseFloat(particleSpeed.value);
             const charge = parseInt(chargeSign.value);
-            let vx = 0, vy = 0;
+            let startX = 160, startY = H * 0.5;
+            let vx = 0, vy = 0, vz = 0;
             switch (mode) {
-                case 'E_parallel': vx = speed * 0.6; vy = 0; break;
-                case 'E_perp': vx = speed * 0.6; vy = 0; break;
-                case 'B_parallel': vx = speed * 0.4; vy = speed * 0.3; break;
-                case 'B_perp': vx = speed * 0.4; vy = speed * 0.2; break;
+                case 'E': vx = 0; vy = speed * 0.6; break;
+                case 'B':
+                    ({ vx, vy, vz } = getTextbookHelixLaunch(charge));
+                    break;
             }
-            const p = new Particle(80, H / 2, vx, vy, charge);
+            const p = new Particle(startX, startY, 0, vx, vy, vz, charge);
             p.pushTrail();
             particles.push(p);
             running = true;
         }
 
+        function getChargeAffinity(particle, mode, direction) {
+            const dir = parseInt(direction);
+            if (mode !== 'E' && mode !== 'B') {
+                return { ax: 0, ay: 0 };
+            }
+
+            // In pure magnetic motion, keep only Lorentz-force dynamics for circular/helical paths.
+            if (mode === 'B') {
+                return { ax: 0, ay: 0 };
+            }
+
+            let leftPoleSign;
+            let strength;
+
+            // Electric pole signs: +1 means positive pole, -1 means negative pole.
+            leftPoleSign = dir > 0 ? 1 : -1;
+            strength = CHARGE_AFFINITY_E;
+
+            const rightPoleSign = -leftPoleSign;
+            const wantedPoleSign = -particle.charge;
+            const targetX = wantedPoleSign === leftPoleSign ? 26 : W - 26;
+            const dx = targetX - particle.x;
+            const distFactor = Math.min(Math.abs(dx) / (W * 0.5), 1);
+            const ax = Math.sign(dx) * strength * (0.35 + distFactor * 0.65);
+
+            return { ax, ay: 0 };
+        }
+
         function update() {
             const mode = fieldMode.value;
             const strength = parseFloat(fieldStrength.value);
-            const direction = fieldDirection.value;
+            const direction = 1; // Default direction since the fieldDirection element was removed
             const field = getField(mode, strength, direction);
             for (let i = particles.length - 1; i >= 0; i--) {
                 const p = particles[i];
                 if (!p.alive) { particles.splice(i, 1); continue; }
                 if (showTrail.checked) p.pushTrail();
-                p.update(field.ex, field.ey, field.bx, field.by, field.bz);
+                const affinity = getChargeAffinity(p, mode, direction);
+                p.update(field.ex, field.ey, field.ez, field.bx, field.by, field.bz, affinity.ax, affinity.ay, 0);
             }
             if (particles.length === 0) running = false;
         }
@@ -561,7 +593,7 @@
             ctx.lineWidth = 0.5;
             for (let x = 0; x <= W; x += 50) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
             for (let y = 0; y <= H; y += 50) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
-            drawFieldIndicators(fieldMode.value, parseFloat(fieldStrength.value), fieldDirection.value, magneticView.value);
+            drawFieldIndicators(fieldMode.value, parseFloat(fieldStrength.value), magneticView.value);
             for (const p of particles) p.draw(ctx);
             if (particles.length > 0) {
                 const p = particles[particles.length - 1];
@@ -599,18 +631,22 @@
             const speed = parseFloat(particleSpeed.value);
             const charge = parseInt(chargeSign.value);
             const mode = fieldMode.value;
-            let vx = 0, vy = 0;
+            let vx = 0, vy = 0, vz = 0;
+            let spawnY = cy;
             switch (mode) {
-                case 'E_parallel': vx = speed * 0.6; vy = 0; break;
-                case 'E_perp': vx = speed * 0.6; vy = 0; break;
-                case 'B_parallel': vx = speed * 0.4; vy = speed * 0.3; break;
-                case 'B_perp': vx = speed * 0.4; vy = speed * 0.2; break;
+                case 'E': vx = 0; vy = speed * 0.6; break;
+                case 'B':
+                    ({ vx, vy, vz } = getTextbookHelixLaunch(charge));
+                    spawnY = H * 0.5;
+                    break;
             }
-            const p = new Particle(cx, cy, vx, vy, charge);
+            const p = new Particle(cx, spawnY, 0, vx, vy, vz, charge);
             p.pushTrail();
             particles.push(p);
             running = true;
         });
+
+        magneticView.value = 'leftright';
 
         fireBtn.addEventListener('click', fireParticle);
         resetBtn.addEventListener('click', resetSim);
