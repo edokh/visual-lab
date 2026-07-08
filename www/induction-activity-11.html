@@ -304,24 +304,45 @@
         function drawMagnet(x, y) {
             const w = 48;
             const h = 96;
-            const grad = ctx.createLinearGradient(x, y, x, y + h);
-            grad.addColorStop(0, '#cbd5e1');
-            grad.addColorStop(0.5, '#a7b4c5');
-            grad.addColorStop(0.5, '#e85f5f');
-            grad.addColorStop(1, '#d43d3d');
+            const halfH = h / 2;
 
-            roundRect(x - w / 2, y - h / 2, w, h, 8);
-            ctx.fillStyle = grad;
-            ctx.fill();
-            ctx.strokeStyle = '#6d7f95';
-            ctx.lineWidth = 1.5;
+            // رسم المغناطيس كقطعة واحدة بحافة مستديرة مع قطع (clip)
+            ctx.save();
+            roundRect(x - w / 2, y - halfH, w, h, 14);
+            ctx.clip();
+
+            // القطب S (أزرق) - النصف العلوي
+            ctx.fillStyle = '#2478ff';
+            ctx.fillRect(x - w / 2, y - halfH, w, halfH);
+
+            // القطب N (أحمر) - النصف السفلي
+            ctx.fillStyle = '#f04763';
+            ctx.fillRect(x - w / 2, y, w, halfH);
+
+            ctx.restore();
+
+            // الحدود الخارجية
+            ctx.strokeStyle = '#dbe5f4';
+            ctx.lineWidth = 1.6;
+            roundRect(x - w / 2, y - halfH, w, h, 14);
             ctx.stroke();
 
-            ctx.fillStyle = '#1e293b';
-            ctx.font = 'bold 12px Arial';
+            // خط فاصل أبيض بين القطبين
+            ctx.strokeStyle = 'rgba(255,255,255,0.65)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(x - w / 2 + 3, y);
+            ctx.lineTo(x + w / 2 - 3, y);
+            ctx.stroke();
+
+            // تسميات القطبين
+            ctx.fillStyle = '#eff6ff';
+            ctx.font = 'bold 15px Arial';
             ctx.textAlign = 'center';
-            ctx.fillText('S', x, y - 20);
-            ctx.fillText('N', x, y + 26);
+            ctx.textBaseline = 'middle';
+            ctx.fillText('S', x, y - halfH / 2);
+            ctx.fillText('N', x, y + halfH / 2);
+            ctx.textBaseline = 'alphabetic';
         }
 
         function drawBatteryAndSwitch(x, y) {
@@ -556,7 +577,9 @@
             const lampTarget = mode === 'switchPulse' ? clamp((Math.abs(state.emf) - 8) / 16, 0, 1) : 0;
             state.lampGlow += (lampTarget - state.lampGlow) * 0.22;
             state.lampGlow *= 0.97;
-            const needleTarget = clamp(state.emf * 0.45, -1, 1);
+            // في وضع المغناطيس: التقريب → إبرة يمين (+)، الإبعاد → إبرة يسار (-)
+            const needleDir = (mode === 'magnet') ? -1 : 1;
+            const needleTarget = clamp(state.emf * 0.45 * needleDir, -1, 1);
             state.needle += (needleTarget - state.needle) * 0.26;
             state.needle *= 0.985;
             state.prevFlux = state.flux;
@@ -568,11 +591,11 @@
 
             const n = Math.abs(state.needle);
             if (n < 0.015) {
-                dirVal.textContent = 'لا يوجد (الصفر التدريجي)';
+                dirVal.textContent = 'لا يوجد';
             } else if (state.needle > 0) {
-                dirVal.textContent = 'اتجاه أول';
+                dirVal.textContent = mode === 'magnet' ? 'تقريب ← إبرة يمين' : 'اتجاه أول';
             } else {
-                dirVal.textContent = 'اتجاه معاكس';
+                dirVal.textContent = mode === 'magnet' ? 'إبعاد ← إبرة يسار' : 'اتجاه معاكس';
             }
         }
 
@@ -802,6 +825,38 @@
                 drawModeSwitchPulse();
             }
         }
+
+        const stepsData = {
+            magnet: {
+                tools: ['مغناطيس قضيبي (قابل للسحب)', 'ملف (محاث)', 'جلفانوميتر', 'أسلاك توصيل'],
+                steps: [
+                    'وصّل طرفَي الملف بمدخلَي الجلفانوميتر بالأسلاك',
+                    'قرّب قطب N من فوهة الملف → الإبرة تنحرف يمينًا',
+                    'أبعد المغناطيس ببطء → الإبرة تنحرف يسارًا',
+                    'أثبّت المغناطيس → الإبرة تعود للصفر (لا تغيّر في الفيض)'
+                ]
+            },
+            moveCoil: {
+                tools: ['ملف ابتدائي (متحرك)', 'ملف ثانوي (ثابت)', 'بطارية', 'مفتاح', 'جلفانوميتر', 'أسلاك توصيل'],
+                steps: [
+                    'وصّل الملف الابتدائي بالبطارية عبر المفتاح',
+                    'وصّل طرفَي الملف الثانوي بالجلفانوميتر',
+                    'أدخل الملف الابتدائي داخل الثانوي → انحراف الإبرة',
+                    'اسحب الملف للخارج → انحراف معاكس',
+                    'أبقِ الملف ثابتًا → لا انحراف'
+                ]
+            },
+            switchPulse: {
+                tools: ['ملفان متداخلان (ابتدائي وثانوي)', 'بطارية', 'مفتاح كهربائي', 'مصباح', 'جلفانوميتر', 'أسلاك توصيل'],
+                steps: [
+                    'وصّل الملف الابتدائي بالبطارية والمفتاح',
+                    'وصّل الملف الثانوي بالمصباح والجلفانوميتر',
+                    'أغلق المفتاح → تيار متزايد → حث لحظي → المصباح يشتعل',
+                    'افتح المفتاح → تيار متناقص → حث معاكس → المصباح يشتعل ثانية',
+                    'التيار الثابت لا يحدث حثًا'
+                ]
+            }
+        };
 
         function syncSwitchButton() {
             switchBtn.textContent = state.switchClosed ? 'فتح المفتاح' : 'إغلاق المفتاح';

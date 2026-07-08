@@ -696,8 +696,8 @@
             const mCoef = 0.0038 * (nP / 200) * (nS / 200) * k;
             state.emfSecondary = -mCoef * dI;
 
-            // Galvanometer deflects only when emf exists, then returns toward zero.
-            const needleTarget = clamp(state.emfSecondary * 8.5, -1, 1);
+            // Match the requested visual convention: opening -> left, closing -> right.
+            const needleTarget = clamp(-state.emfSecondary * 8.5, -1, 1);
             state.needle += (needleTarget - state.needle) * 0.28;
             state.needle *= 0.985;
 
@@ -721,7 +721,7 @@
             ctx.font = 'bold 13px Arial';
             ctx.textAlign = 'right';
             ctx.fillText(
-                state.switchClosed ? 'عند استقرار التيار بعد الإغلاق يعود المؤشر للصفر تقريباً' : 'افتح/اغلق المفتاح لتوليد انحراف لحظي بالمؤشر',
+                state.switchClosed ? 'عند الغلق ينحرف المؤشر إلى اليمين ثم يعود للصفر تقريباً' : 'عند الفتح ينحرف المؤشر إلى اليسار بشكل لحظي',
                 W - 16,
                 16
             );
