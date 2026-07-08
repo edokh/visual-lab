@@ -54,6 +54,12 @@
             border-radius: 0;
             border: 1px solid #2a2a4a;
             min-height: 0;
+            cursor: grab;
+            touch-action: none;
+        }
+
+        canvas.dragging {
+            cursor: grabbing;
         }
 
         .controls {
@@ -176,15 +182,11 @@
                 <input type="range" id="bField" min="0" max="300" value="140">
             </label>
 
-            <label>سرعة الساق v
-                <input type="range" id="velocity" min="0" max="300" value="120">
-            </label>
-
             <label>طول الساق ℓ
                 <input type="range" id="rodLength" min="120" max="360" value="260">
             </label>
 
-            <button class="btn" id="stepBtn">تحديث الحالة</button>
+            <button class="btn" id="stepBtn">إعادة موضع الساق</button>
             <button class="btn reset" id="resetBtn">إعادة تعيين</button>
         </div>
 
@@ -200,7 +202,7 @@
             <span><span class="legend-dot" style="background:#8ec8f2;"></span> مجال مغناطيسي (داخل الصفحة)</span>
             <span><span class="legend-dot" style="background:#ff9f9f;"></span> ساق موصلة متحركة</span>
             <span><span class="legend-dot" style="background:#88ff88;"></span> القوى/المجال الناتج</span>
-            <span style="color:#ffaa44;">العلاقة المستخدمة: ε = v B ℓ</span>
+            <span style="color:#ffaa44;">العلاقة: ε = v B ℓ &nbsp;|&nbsp; اسحب الساق يدويًا لليمين/يسار</span>
         </div>
     </div>
 
@@ -212,7 +214,6 @@
 
         const viewMode = document.getElementById('viewMode');
         const bField = document.getElementById('bField');
-        const velocity = document.getElementById('velocity');
         const rodLength = document.getElementById('rodLength');
         const stepBtn = document.getElementById('stepBtn');
         const resetBtn = document.getElementById('resetBtn');
@@ -227,7 +228,10 @@
             rodX: W * 0.39,
             eInternal: 0,
             targetE: 0,
-            phase: 0
+            isDragging: false,
+            dragOffsetX: 0,
+            dragVelocity: 0,
+            prevDragX: W * 0.39
         };
 
         const DT = 1 / 60;
@@ -314,12 +318,6 @@
             ctx.strokeStyle = '#f6d3d3';
             ctx.lineWidth = 1.1;
             ctx.strokeRect(rodX, rodY, rodW, rodH);
-
-            ctx.fillStyle = '#1f2a3a';
-            ctx.font = 'bold 12px Arial';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText('ساق موصلة', rodX + rodW * 0.5, rodY + rodH + 18);
         }
 
         function drawCharges(rodX, rodY, rodW, rodH, intensity) {
@@ -418,14 +416,27 @@
             }
         }
 
+        function canvasPoint(e) {
+            const rect = canvas.getBoundingClientRect();
+            const sx = canvas.width / rect.width;
+            const sy = canvas.height / rect.height;
+            return {
+                x: (e.clientX - rect.left) * sx,
+                y: (e.clientY - rect.top) * sy
+            };
+        }
+
         function updateModel() {
             const mode = viewMode.value;
             const B = parseFloat(bField.value) / 100;
-            const v = parseFloat(velocity.value) / 100;
             const L = parseFloat(rodLength.value) / 1000;
 
-            state.phase += DT;
-            state.rodX = W * 0.26 + Math.sin(state.phase * (0.4 + v * 0.12)) * 70;
+            // احسب السرعة من سرعة سحب الساق
+            const rawV = Math.abs(state.rodX - state.prevDragX) / DT * 0.012;
+            state.dragVelocity = state.dragVelocity * 0.75 + rawV * 0.25;
+            if (!state.isDragging) state.dragVelocity *= 0.88;
+            state.prevDragX = state.rodX;
+            const v = clamp(state.dragVelocity, 0, 3);
 
             state.targetE = v * B;
 
@@ -451,7 +462,7 @@
 
             const mode = viewMode.value;
             const B = parseFloat(bField.value) / 100;
-            const v = parseFloat(velocity.value) / 100;
+            const v = clamp(state.dragVelocity, 0, 3);
             const L = parseFloat(rodLength.value) / 1000;
             const rodH = parseFloat(rodLength.value);
             const rodW = 48;
@@ -494,20 +505,56 @@
         }
 
         stepBtn.addEventListener('click', () => {
-            state.phase += 0.12;
-            updateModel();
-            draw();
+            // إعادة الساق إلى الوسط
+            state.rodX = W * 0.39;
+            state.dragVelocity = 0;
+            state.prevDragX = state.rodX;
         });
 
         resetBtn.addEventListener('click', () => {
             bField.value = '140';
-            velocity.value = '120';
             rodLength.value = '260';
             viewMode.value = 'a';
-            state.phase = 0;
             state.eInternal = 0;
             state.targetE = 0;
             state.rodX = W * 0.39;
+            state.dragVelocity = 0;
+            state.prevDragX = W * 0.39;
+        });
+
+        canvas.addEventListener('pointerdown', (e) => {
+            const p = canvasPoint(e);
+            const rodW = 48;
+            const rodH = parseFloat(rodLength.value);
+            const rodY = H * 0.22;
+            if (p.x >= state.rodX && p.x <= state.rodX + rodW &&
+                p.y >= rodY && p.y <= rodY + rodH) {
+                state.isDragging = true;
+                state.dragOffsetX = p.x - state.rodX;
+                canvas.setPointerCapture(e.pointerId);
+                canvas.classList.add('dragging');
+            }
+        });
+
+        canvas.addEventListener('pointermove', (e) => {
+            if (!state.isDragging) return;
+            const p = canvasPoint(e);
+            const rodW = 48;
+            const minX = W * 0.1;
+            const maxX = W * 0.58 - rodW;
+            state.rodX = clamp(p.x - state.dragOffsetX, minX, maxX);
+        });
+
+        canvas.addEventListener('pointerup', (e) => {
+            if (!state.isDragging) return;
+            state.isDragging = false;
+            canvas.classList.remove('dragging');
+            canvas.releasePointerCapture(e.pointerId);
+        });
+
+        canvas.addEventListener('pointercancel', () => {
+            state.isDragging = false;
+            canvas.classList.remove('dragging');
         });
 
         loop();
