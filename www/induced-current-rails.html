@@ -221,7 +221,9 @@
             force: 0,
             dragging: false,
             dragOffsetX: 0,
-            smoothLamp: 0
+            smoothLamp: 0,
+            animTime: 0,
+            particles: [] // array of moving charge particles
         };
 
         const DT = 1 / 60;
@@ -276,35 +278,71 @@
 
         function drawLamp(x, y, intensity) {
             const glow = clamp(intensity, 0, 1);
+            
+            // الهالة الضوئية
             if (glow > 0.01) {
-                const g = ctx.createRadialGradient(x, y, 4, x, y, 36);
-                g.addColorStop(0, `rgba(255,234,150,${0.35 + glow * 0.5})`);
-                g.addColorStop(1, 'rgba(255,234,150,0)');
+                const g = ctx.createRadialGradient(x, y - 2, 2, x, y - 2, 45);
+                g.addColorStop(0, `rgba(255,250,180,${0.4 + glow * 0.55})`);
+                g.addColorStop(0.6, `rgba(255,220,100,${0.15 + glow * 0.25})`);
+                g.addColorStop(1, 'rgba(255,220,100,0)');
                 ctx.fillStyle = g;
                 ctx.beginPath();
-                ctx.arc(x, y, 36, 0, Math.PI * 2);
+                ctx.arc(x, y - 2, 45, 0, Math.PI * 2);
                 ctx.fill();
             }
 
-            ctx.fillStyle = '#c9d6df';
-            ctx.strokeStyle = '#7c8e9a';
-            ctx.lineWidth = 2;
+            // الزجاج (كروي)
+            const bulbGrad = ctx.createRadialGradient(x - 5, y - 6, 3, x, y, 14);
+            bulbGrad.addColorStop(0, '#f0f4f9');
+            bulbGrad.addColorStop(0.7, '#d8e4ef');
+            bulbGrad.addColorStop(1, '#b8c8d8');
+            ctx.fillStyle = bulbGrad;
             ctx.beginPath();
-            ctx.arc(x, y, 16, 0, Math.PI * 2);
+            ctx.arc(x, y, 14, 0, Math.PI * 2);
             ctx.fill();
+            
+            ctx.strokeStyle = '#7a8fa3';
+            ctx.lineWidth = 1.8;
+            ctx.beginPath();
+            ctx.arc(x, y, 14, 0, Math.PI * 2);
             ctx.stroke();
 
-            ctx.fillStyle = `rgba(255,217,102,${0.25 + glow * 0.75})`;
+            // خيط المتوهج (فتيل)
+            ctx.strokeStyle = glow < 0.1 ? '#5a5a5a' : `rgba(255,${Math.round(150 + glow * 100)},50,${0.6 + glow * 0.4})`;
+            ctx.lineWidth = 1.5;
             ctx.beginPath();
-            ctx.arc(x, y, 10, 0, Math.PI * 2);
-            ctx.fill();
+            ctx.moveTo(x - 4, y - 1);
+            ctx.quadraticCurveTo(x, y + 4, x + 4, y - 2);
+            ctx.stroke();
 
-            ctx.fillStyle = '#7c8e9a';
-            ctx.fillRect(x - 7, y + 12, 14, 10);
-            ctx.fillStyle = '#ffd166';
-            ctx.font = 'bold 12px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillText('مصباح', x, y + 40);
+            // نقطة مركزية متوهجة
+            if (glow > 0.05) {
+                ctx.fillStyle = `rgba(255,${Math.round(180 + glow * 60)},100,${glow * 0.9})`;
+                ctx.beginPath();
+                ctx.arc(x, y + 1, 3 + glow * 4, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // القاعدة (معدن)
+            ctx.fillStyle = '#c5a882';
+            ctx.fillRect(x - 8, y + 14, 16, 4);
+            ctx.strokeStyle = '#9a8567';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(x - 8, y + 14, 16, 4);
+
+            // القطع السفلي
+            ctx.fillStyle = '#8b7355';
+            ctx.beginPath();
+            ctx.moveTo(x - 6, y + 18);
+            ctx.lineTo(x + 6, y + 18);
+            ctx.lineTo(x + 4, y + 24);
+            ctx.lineTo(x - 4, y + 24);
+            ctx.closePath();
+            ctx.fill();
+            
+            ctx.strokeStyle = '#5a4a3a';
+            ctx.lineWidth = 0.8;
+            ctx.stroke();
         }
 
         function drawWire(points, core, glow) {
@@ -340,21 +378,118 @@
             }
         }
 
+        // Build complete circuit path as array of points
+        function buildCircuitPath(L) {
+            const path = [];
+            
+            // Top of rod → left along top rail → lamp top connection
+            for (let x = L.rodX; x >= L.lampX; x -= 8) path.push([x, L.topY]);
+            for (let x = L.lampX; x >= L.leftX; x -= 8) path.push([x, L.topY]);
+            
+            // Top rail to lamp top
+            for (let y = L.topY; y <= L.lampY - 16; y += 8) path.push([L.lampX, y]);
+            
+            // Through lamp (vertical)
+            for (let y = L.lampY - 16; y <= L.lampY + 16; y += 5) path.push([L.lampX, y]);
+            
+            // Lamp bottom to bottom rail
+            for (let y = L.lampY + 16; y <= L.bottomY; y += 8) path.push([L.lampX, y]);
+            
+            // Along bottom rail to left
+            for (let x = L.lampX; x >= L.leftX; x -= 8) path.push([x, L.bottomY]);
+            
+            // Up the rod on left side (from bottom to top)
+            for (let y = L.bottomY; y >= L.topY; y -= 8) path.push([L.leftX, y]);
+            
+            // Along top rail back to rod
+            for (let x = L.leftX; x <= L.rodX; x += 8) path.push([x, L.topY]);
+            
+            // Up through the rod itself
+            for (let y = L.topY; y <= L.bottomY; y += 8) path.push([L.rodX, y]);
+            
+            return path;
+        }
+
+        // Calculate total path length
+        function getPathLength(path) {
+            let len = 0;
+            for (let i = 1; i < path.length; i++) {
+                const dx = path[i][0] - path[i - 1][0];
+                const dy = path[i][1] - path[i - 1][1];
+                len += Math.sqrt(dx * dx + dy * dy);
+            }
+            return len;
+        }
+
+        // Get position on path at given distance
+        function getPositionOnPath(path, distance) {
+            distance = distance % getPathLength(path);
+            if (distance < 0) distance = getPathLength(path) + distance;
+            
+            let currentDist = 0;
+            for (let i = 1; i < path.length; i++) {
+                const dx = path[i][0] - path[i - 1][0];
+                const dy = path[i][1] - path[i - 1][1];
+                const segLen = Math.sqrt(dx * dx + dy * dy);
+                if (currentDist + segLen >= distance) {
+                    const ratio = (distance - currentDist) / segLen;
+                    return [
+                        path[i - 1][0] + dx * ratio,
+                        path[i - 1][1] + dy * ratio
+                    ];
+                }
+                currentDist += segLen;
+            }
+            return path[0];
+        }
+
+        // Draw moving particles
+        function drawParticles(path, speed, direction, intensity) {
+            if (!path || path.length < 2 || intensity < 0.05) return;
+            
+            const pathLen = getPathLength(path);
+            const particleCount = Math.max(30, Math.floor(pathLen / 15));
+            const particleSpacing = pathLen / particleCount;
+            const offset = (state.animTime * speed * direction * 100) % pathLen;
+            
+            for (let i = 0; i < particleCount; i++) {
+                const distOnPath = (i * particleSpacing + offset) % pathLen;
+                const pos = getPositionOnPath(path, distOnPath);
+                
+                // Draw glowing particle
+                const alpha = 0.5 + intensity * 0.5;
+                const size = 2.5 + intensity * 1.5;
+                
+                ctx.fillStyle = `rgba(255,200,100,${alpha})`;
+                ctx.beginPath();
+                ctx.arc(pos[0], pos[1], size, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Glow effect
+                if (intensity > 0.3) {
+                    ctx.fillStyle = `rgba(255,220,150,${alpha * 0.4})`;
+                    ctx.beginPath();
+                    ctx.arc(pos[0], pos[1], size + 3, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+        }
+
         function getLayout() {
             const l = parseFloat(rodLen.value);
             const yMid = H * 0.5;
             const topY = yMid - l / 2;
             const bottomY = yMid + l / 2;
-            const leftX = 190;
-            const rightLimit = 760;
+            const leftX = 140;
+            const rightLimit = 880;
             return {
                 topY,
                 bottomY,
                 leftX,
                 rightLimit,
                 rodW: 24,
-                lampX: 130,
-                lampY: topY - 46
+                lampX: 62,
+                lampY: (topY + bottomY) / 2
             };
         }
 
@@ -372,6 +507,7 @@
 
             const lampTarget = clamp(Math.abs(state.current) * 5.5, 0, 1);
             state.smoothLamp += (lampTarget - state.smoothLamp) * 0.25;
+            state.animTime += DT;
 
             vVal.textContent = state.vel.toFixed(2);
             emfVal.textContent = state.emf.toFixed(3);
@@ -411,36 +547,42 @@
                 }
             }
 
+            // السككتان: مفتوحتان من اليمين واليسار
             ctx.strokeStyle = '#9aa7b5';
             ctx.lineWidth = 6;
+            ctx.lineCap = 'round';
             ctx.beginPath();
             ctx.moveTo(L.leftX, L.topY);
             ctx.lineTo(L.rightLimit, L.topY);
             ctx.moveTo(L.leftX, L.bottomY);
             ctx.lineTo(L.rightLimit, L.bottomY);
-            ctx.moveTo(L.leftX, L.topY);
-            ctx.lineTo(L.leftX, L.bottomY);
             ctx.stroke();
+            ctx.lineCap = 'butt';
 
+            // المصباح: موضوع بين السكتين على اليسار
             drawLamp(L.lampX, L.lampY, state.smoothLamp);
 
+            // سلك من طرف السكة العلوية إلى أعلى المصباح
             drawWire([
                 [L.leftX, L.topY],
-                [L.leftX - 60, L.topY],
-                [L.leftX - 60, L.lampY],
-                [L.lampX - 16, L.lampY]
+                [L.lampX, L.topY],
+                [L.lampX, L.lampY - 16]
             ], '#d0d8e2', state.smoothLamp * 0.5);
 
+            // سلك من أسفل المصباح إلى طرف السكة السفلية
             drawWire([
-                [L.lampX + 16, L.lampY],
-                [L.leftX - 42, L.lampY],
-                [L.leftX - 42, L.bottomY],
+                [L.lampX, L.lampY + 16],
+                [L.lampX, L.bottomY],
                 [L.leftX, L.bottomY]
             ], '#d0d8e2', state.smoothLamp * 0.5);
 
-            ctx.fillStyle = '#f3b3b3';
+            // Draw moving charge particles around the complete circuit
+            const circuitPath = buildCircuitPath(L);
+            drawParticles(circuitPath, Math.abs(state.vel) * 0.5, state.current > 0 ? 1 : -1, state.smoothLamp);
+
+            ctx.fillStyle = '#6b3119';
             ctx.fillRect(state.rodX - L.rodW / 2, L.topY - 4, L.rodW, L.bottomY - L.topY + 8);
-            ctx.strokeStyle = '#f6d3d3';
+            ctx.strokeStyle = '#421e0f';
             ctx.lineWidth = 1.5;
             ctx.strokeRect(state.rodX - L.rodW / 2, L.topY - 4, L.rodW, L.bottomY - L.topY + 8);
 
@@ -449,12 +591,34 @@
             ctx.font = 'bold 13px Arial';
             ctx.fillText('v', state.rodX + 103, (L.topY + L.bottomY) / 2 - 10);
 
-            if (Math.abs(state.current) > 0.003) {
-                const dir = state.current > 0 ? -1 : 1;
-                const y0 = (L.topY + L.bottomY) / 2;
-                drawArrow(state.rodX, y0 + 45 * dir, state.rodX, y0 - 55 * dir, '#ff9f9f', 2.4);
-                ctx.fillStyle = '#ff9f9f';
-                ctx.fillText('F_B1', state.rodX + 22, y0 - 56 * dir);
+            if (Math.abs(state.vel) > 0.02) {
+                const movingRight = state.vel > 0;
+                const forceColor = movingRight ? '#ff2d2d' : '#33d1ff';
+                const topY = L.topY - 36;
+                const bottomY = L.bottomY + 36;
+                const nearRodX = state.rodX - 50;
+                const leftSideX = L.leftX + 12;
+                const midX = (nearRodX + leftSideX) / 2;
+                const gap = 14;
+
+                // عند الحركة يمينًا: الأسهم العلوية لليسار والسفلية لليمين. عند الحركة يسارًا ينعكس الاتجاه.
+                if (movingRight) {
+                    drawArrow(nearRodX, topY, midX + gap, topY, forceColor, 3);
+                    drawArrow(midX - gap, topY, leftSideX, topY, forceColor, 3);
+                    drawArrow(leftSideX, bottomY, midX - gap, bottomY, forceColor, 3);
+                    drawArrow(midX + gap, bottomY, nearRodX, bottomY, forceColor, 3);
+                } else {
+                    drawArrow(leftSideX, topY, midX - gap, topY, forceColor, 3);
+                    drawArrow(midX + gap, topY, nearRodX, topY, forceColor, 3);
+                    drawArrow(nearRodX, bottomY, midX + gap, bottomY, forceColor, 3);
+                    drawArrow(midX - gap, bottomY, leftSideX, bottomY, forceColor, 3);
+                }
+
+                ctx.fillStyle = forceColor;
+                ctx.font = 'bold 20px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('FB', midX, topY - 14);
+                ctx.fillText('FB', midX, bottomY + 18);
             }
 
             ctx.fillStyle = '#ffaa44';
