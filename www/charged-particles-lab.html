@@ -167,7 +167,7 @@
             <label>الحقل:
                 <select id="fieldMode">
                     <option value="E">E</option>
-                    <option value="B" selected>B</option>
+                    <option value="B">B</option>
                 </select>
             </label>
 
@@ -186,7 +186,7 @@
             </label>
 
             <label>سرعة الحركة
-                <input type="range" id="animationSpeed" min="0.1" max="2" step="0.1" value="0.1">
+                <input type="range" id="animationSpeed" min="0.1" max="2" step="0.1" value="0.5">
             </label>
 
             <label>الشحنة:
@@ -245,11 +245,13 @@
         // Textbook-style helix visualization parameters (B mode only).
         const MAG_TOP_PAD = 0;
         const MAG_BOTTOM_PAD = 250;
-        const MAG_LEFT_INNER = 60;
+        const MAG_LEFT_INNER = 250;
         const MAG_RIGHT_INNER = 940;
-        const MAG_FIELD_TOP = 180;
         const HELIX_RADIUS_MARGIN = 14;
         const HELIX_TURNS_TARGET = 10;
+        const MAG_ARROWS_TOP = 100;
+        const MAG_ARROWS_BOTTOM = 50;
+        const MAG_ARROW_ROWS = 5;
 
         let particles = [];
         let running = false;
@@ -276,7 +278,8 @@
                 const effectiveDT = DT * parseFloat(animationSpeed.value);
 
                 if (fieldMode.value === 'B') {
-                    if (!this.enteredMagField && this.y < MAG_FIELD_TOP) {
+                    const band = getMagneticArrowBand();
+                    if (!this.enteredMagField && this.y < band.centerY) {
                         this.x += this.vx * effectiveDT;
                         this.y += this.vy * effectiveDT;
                         this.z += this.vz * effectiveDT;
@@ -289,8 +292,8 @@
 
                     if (!this.enteredMagField) {
                         this.enteredMagField = true;
-                        this.y = MAG_FIELD_TOP;
                         const helix = getTextbookHelixLaunch(this.charge);
+                        this.y = band.centerY;
                         this.vx = helix.vx;
                         this.vy = Math.abs(helix.vy);
                         this.vz = helix.vz;
@@ -484,8 +487,8 @@
         function drawMagneticPlateArrows(dirSign, alpha) {
             const plateW = 20;
             const edgePad = 24;
-            const topPad = 100;
-            const bottomPad = 50;
+            const topPad = MAG_ARROWS_TOP;
+            const bottomPad = MAG_ARROWS_BOTTOM;
             const leftX = edgePad;
             const rightX = W - edgePad - plateW;
             const leftPole = dirSign > 0 ? 'N' : 'S';
@@ -501,7 +504,7 @@
 
             const startX = leftX + plateW + 16;
             const endX = rightX - 16;
-            const rows = 5;
+            const rows = MAG_ARROW_ROWS;
             const usableH = H - topPad - bottomPad;
 
             for (let i = 0; i < rows; i++) {
@@ -512,6 +515,21 @@
                     drawArrow(ctx, endX, y, startX, y, `rgba(100,200,255,${0.35 + alpha * 0.6})`, 2.3);
                 }
             }
+        }
+
+        function getMagneticArrowBand() {
+            const topPad = 65;
+            const bottomPad = 100;
+            const rows = MAG_ARROW_ROWS;
+            const usableH = H - topPad - bottomPad;
+            const firstY = topPad + usableH / (rows + 1);
+            const lastY = topPad + (rows * usableH) / (rows + 1);
+            return {
+                firstY,
+                lastY,
+                centerY: (firstY + lastY) * 0.5,
+                halfSpan: (lastY - firstY) * 0.5
+            };
         }
 
         function drawArrow(ctx, x1, y1, x2, y2, color, width) {
@@ -538,7 +556,8 @@
         function getTextbookHelixLaunch(charge) {
             const bMag = Math.max(parseFloat(fieldStrength.value) * 0.01, 0.05);
             const omega = Math.abs(charge) * Q_OVER_M * bMag;
-            const targetRadius = ((H - MAG_TOP_PAD - MAG_BOTTOM_PAD) / 2) - HELIX_RADIUS_MARGIN;
+            const band = getMagneticArrowBand();
+            const targetRadius = Math.max(12, band.halfSpan - 2);
             const targetPitch = (MAG_RIGHT_INNER - MAG_LEFT_INNER) / HELIX_TURNS_TARGET;
 
             return {

@@ -231,12 +231,12 @@
     panel.id = 'experimentGuide';
     panel.hidden = true;
     panel.innerHTML =
-      '<h2>دليل التجربة</h2>' +
-      '<h3>الأدوات المطلوبة</h3>' +
+      '<h2>دليل التجربة</h2>' + (
+        renderList(guide.tools) ? '<h3>الأدوات المطلوبة</h3>' : '') +
       '<ul>' + renderList(guide.tools) + '</ul>' +
-      '<h3>طريقة ربط الأدوات</h3>' +
+      (renderList(guide.wiring) ? '<h3>طريقة ربط الأدوات</h3>' : '') +
       '<ul>' + renderList(guide.wiring) + '</ul>' +
-      '<h3>المحصلة النهائية والغرض</h3>' +
+      (renderList(guide.outcome) ? '<h3>المحصلة النهائية والغرض</h3>' : '') +
       '<ul>' + renderList(guide.outcome) + '</ul>';
 
     controls.appendChild(btn);
