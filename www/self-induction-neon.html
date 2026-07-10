@@ -168,8 +168,10 @@
 
 <body>
     <a class="vl-back" href="index.html" aria-label="العودة">
-        <span class="vl-back__icon">&#8592;</span>
-        <span>رجوع</span>
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+            class="back_icon">
+            <path stroke-linecap="round" stroke-width="2.5" stroke-linejoin="round" d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" />
+        </svg>
     </a>
 
     <div class="lab-container">
@@ -241,7 +243,8 @@
             didt: 0,
             vL: 0,
             neonOn: false,
-            neonGlow: 0
+            neonGlow: 0,
+            openingFlashTime: 0
         };
 
         const DT = 1 / 60;
@@ -483,14 +486,14 @@
                 const tau = L / R;
                 const a = 1 - Math.exp(-DT / Math.max(tau, 0.002));
                 state.i += (targetI - state.i) * a;
+                state.neonOn = false;
+                state.openingFlashTime = 0;
             } else {
-                const naturalDidt = -state.i * R / Math.max(L, 0.0001);
-                const naturalVL = Math.abs(L * naturalDidt);
-
-                if (naturalVL >= Vstrike && Math.abs(state.i) > 0.0001) {
+                if (state.openingFlashTime > 0 && Math.abs(state.i) > 0.0001) {
                     const signedDidt = state.i > 0 ? -Vstrike / Math.max(L, 0.0001) : Vstrike / Math.max(L, 0.0001);
                     state.i += signedDidt * DT;
                     state.neonOn = true;
+                    state.openingFlashTime = Math.max(0, state.openingFlashTime - DT);
                 } else {
                     const decayR = R * 0.45;
                     const didt = -state.i * decayR / Math.max(L, 0.0001);
@@ -509,8 +512,8 @@
             state.prevI = state.i;
 
             const lampTarget = state.neonOn ? 1 : 0;
-            state.neonGlow += (lampTarget - state.neonGlow) * 0.35;
-            if (!state.neonOn) state.neonGlow *= 0.9;
+            const glowResponse = state.neonOn ? 0.32 : 0.08;
+            state.neonGlow += (lampTarget - state.neonGlow) * glowResponse;
 
             swVal.textContent = state.switchClosed ? 'مغلق' : 'مفتوح';
             iVal.textContent = state.i.toFixed(3);
@@ -604,7 +607,11 @@
         }
 
         switchBtn.addEventListener('click', () => {
+            const wasClosed = state.switchClosed;
             state.switchClosed = !state.switchClosed;
+            if (wasClosed && !state.switchClosed && Math.abs(state.i) > 0.0005) {
+                state.openingFlashTime = 0.18;
+            }
             syncSwitchBtn();
         });
 
@@ -620,6 +627,7 @@
             state.vL = 0;
             state.neonOn = false;
             state.neonGlow = 0;
+            state.openingFlashTime = 0;
             syncSwitchBtn();
         });
 
