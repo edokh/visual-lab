@@ -34,6 +34,14 @@
             flex-shrink: 0;
         }
 
+        .subtitle {
+            color: #b9c9e8;
+            font-size: 0.86rem;
+            margin-bottom: 8px;
+            line-height: 1.45;
+            flex-shrink: 0;
+        }
+
         .lab-container {
             background: #1a1a2e;
             border-radius: 0;
@@ -73,7 +81,7 @@
             border-radius: 0;
             border: 1px solid #2a2a4a;
             flex-shrink: 0;
-            font-size: 0.75rem;
+            font-size: 0.82rem;
         }
 
         .controls label {
@@ -115,7 +123,7 @@
             flex-wrap: wrap;
             gap: 10px 24px;
             margin-top: 6px;
-            font-size: 0.7rem;
+            font-size: 0.78rem;
             color: #99aacc;
             flex-shrink: 0;
         }
@@ -127,8 +135,19 @@
         }
 
         .info .val {
-            color: #88ddff;
+            color: #9fe8ff;
             font-weight: 600;
+        }
+
+        .hint {
+            margin-top: 6px;
+            color: #ffd48a;
+            font-size: 0.78rem;
+            background: #1a1a30;
+            border: 1px solid #2a2a4a;
+            border-radius: 6px;
+            padding: 6px 10px;
+            flex-shrink: 0;
         }
 
         .legend {
@@ -159,6 +178,8 @@
 
     <div class="lab-container">
         <h1>🧲 قانون لنز: اتجاه التيار المستحث يعاكس تغير الفيض</h1>
+        <p class="subtitle">اسحب المغناطيس عموديا قرب الحلقة. كلما ازداد تغير الفيض زادت القوة الدافعة المستحثة وتغير
+            اتجاه التيار.</p>
         <canvas id="lenzCanvas" width="1000" height="600"></canvas>
 
         <div class="controls">
@@ -185,6 +206,10 @@
             <span>ε المستحثة: <span class="val" id="emfVal">0.000</span> V</span>
             <span>I المستحث: <span class="val" id="currentVal">0.000</span> A</span>
             <span>اتجاه التيار: <span class="val" id="dirVal">لا يوجد</span></span>
+            <span>حالة التغير: <span class="val" id="stateVal">مستقر</span></span>
+        </div>
+
+        <div class="hint">اقترب بالمغناطيس من الحلقة ولاحظ تغير الاشارة في dΦ/dt ثم ابتعد به لترى انعكاس اتجاه التيار.
         </div>
 
         <div class="legend">
@@ -213,17 +238,29 @@
         const emfVal = document.getElementById('emfVal');
         const currentVal = document.getElementById('currentVal');
         const dirVal = document.getElementById('dirVal');
+        const stateVal = document.getElementById('stateVal');
 
         const state = {
             magnetY: 170,
+            prevMagnetY: 170,
             prevFlux: 0,
             flux: 0,
             dFlux: 0,
             emf: 0,
             current: 0,
             smoothCurrent: 0,
+            magnetVelocity: 0,
+            facingPole: 'N',
+            motionState: 'still',
+            inducedField: 'none',
+            currentDirSign: 0,
+            prevPoleDistance: null,
+            arrowPhase: 0,
+            arrowAngularSpeed: 0,
+            arrowAlpha: 0,
             dragging: false,
-            dragOffsetY: 0
+            dragOffsetY: 0,
+            dragDirection: 0
         };
 
         const DT = 1 / 60;
@@ -249,7 +286,7 @@
             }
         }
 
-        function drawArrow(x1, y1, x2, y2, color, width) {
+        function drawArrow(x1, y1, x2, y2, color, width, unnecessaryDownPart = 0, unnecessaryUpPart = 0, isUp = 2) {
             const dx = x2 - x1;
             const dy = y2 - y1;
             const len = Math.sqrt(dx * dx + dy * dy);
@@ -257,18 +294,31 @@
 
             const ux = dx / len;
             const uy = dy / len;
-            const head = 9;
-            const hw = 5;
+            const head = Math.max(9, width * 4);
+            const hw = Math.max(5, width * 2.2);
 
             ctx.strokeStyle = color;
             ctx.lineWidth = width;
             ctx.beginPath();
+            if (isUp === 1) {
+                unnecessaryUpPart += 90;
+                y1 += 90;
+            } else if (isUp === 0) {
+                y1 -= 35;
+                unnecessaryUpPart -=50;
+            }
+
+
             ctx.moveTo(x1, y1);
-            ctx.lineTo(x2, y2);
+            ctx.lineTo(x2, y2 + unnecessaryUpPart - unnecessaryDownPart);
             ctx.stroke();
 
             ctx.fillStyle = color;
             ctx.beginPath();
+            if (isUp === 1)
+                y2 += 90;
+            else if (isUp === 0)
+                y2 -= 35;
             ctx.moveTo(x2, y2);
             ctx.lineTo(x2 - ux * head + uy * hw, y2 - uy * head - ux * hw);
             ctx.lineTo(x2 - ux * head - uy * hw, y2 - uy * head + ux * hw);
@@ -288,27 +338,40 @@
         }
 
         function drawMagnet(cx, cy) {
-            const w = 56;
-            const h = 110;
-            const grad = ctx.createLinearGradient(cx, cy - h / 2, cx, cy + h / 2);
-            grad.addColorStop(0, '#d1dae6');
-            grad.addColorStop(0.52, '#d1dae6');
-            grad.addColorStop(0.52, '#e45a5a');
-            grad.addColorStop(1, '#d43d3d');
+            const w = 40;
+            const h = 120;
+            const halfH = h / 2;
 
-            roundRect(cx - w / 2, cy - h / 2, w, h, 8);
-            ctx.fillStyle = grad;
-            ctx.fill();
-            ctx.strokeStyle = '#75879d';
-            ctx.lineWidth = 1.4;
+            ctx.save();
+            roundRect(cx - w / 2, cy - halfH, w, h, 14);
+            ctx.clip();
+
+            ctx.fillStyle = '#2478ff';
+            ctx.fillRect(cx - w / 2, cy - halfH, w, halfH);
+
+            ctx.fillStyle = '#f04763';
+            ctx.fillRect(cx - w / 2, cy, w, halfH);
+            ctx.restore();
+
+            ctx.strokeStyle = '#dbe5f4';
+            ctx.lineWidth = 1.6;
+            roundRect(cx - w / 2, cy - halfH, w, h, 14);
             ctx.stroke();
 
-            ctx.fillStyle = '#1d2938';
-            ctx.font = 'bold 12px Arial';
+            ctx.strokeStyle = 'rgba(255,255,255,0.65)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(cx - w / 2 + 3, cy);
+            ctx.lineTo(cx + w / 2 - 3, cy);
+            ctx.stroke();
+
+            ctx.fillStyle = '#eff6ff';
+            ctx.font = 'bold 15px Arial';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText('S', cx, cy - 26);
-            ctx.fillText('N', cx, cy + 28);
+            ctx.fillText('S', cx, cy - halfH / 2);
+            ctx.fillText('N', cx, cy + halfH / 2);
+            ctx.textBaseline = 'alphabetic';
         }
 
         function drawLoop(cx, cy, rx, ry, nTurns) {
@@ -323,58 +386,100 @@
         }
 
         function drawFieldLinesToLoop(cx, magnetY, loopY, intensity) {
-            const northTipY = magnetY + 55;
+            const magnetBottomY = magnetY + 60;
             const alpha = clamp(0.12 + intensity * 0.55, 0.12, 0.75);
+            const lineCount = 5;
+            const magnetHalfWidth = 20;
+            const loopRx = 120;
+            const loopRy = 30;
+            const loopSpread = 0.82;
+            const showArrowHeads = state.dragging;
             ctx.strokeStyle = `rgba(120,190,255,${alpha})`;
             ctx.lineWidth = 1.8;
-            for (let i = -2; i <= 2; i++) {
-                const x = cx + i * 18;
+            for (let i = 0; i < lineCount; i++) {
+                const ratio = lineCount === 1 ? 0.5 : i / (lineCount - 1);
+                const startOffsetX = (ratio - 0.5) * magnetHalfWidth * 2;
+                const endOffsetX = (ratio - 0.5) * loopRx * 2 * loopSpread;
+                const endYOffset = loopRy * Math.sqrt(Math.max(0, 1 - Math.pow(endOffsetX / loopRx, 2)));
+                const startX = cx + startOffsetX;
+                const endX = cx + endOffsetX;
+                const endY = loopY + endYOffset;
+
                 ctx.beginPath();
-                ctx.moveTo(x, northTipY);
+                ctx.moveTo(startX, magnetBottomY);
                 ctx.bezierCurveTo(
-                    x - 24,
-                    northTipY + 45,
-                    cx - 30 + i * 10,
-                    loopY - 20,
-                    cx - 8 + i * 6,
-                    loopY + 2
+                    startX,
+                    magnetBottomY + 38,
+                    endX,
+                    endY - 42,
+                    endX,
+                    endY
                 );
                 ctx.stroke();
+
+                if (showArrowHeads) {
+                    const tangentX = endX - endX;
+                    const tangentY = endY - (endY - 42);
+                    const tangentLen = Math.hypot(tangentX, tangentY) || 1;
+                    const ux = tangentX / tangentLen;
+                    const uy = tangentY / tangentLen;
+                    const nx = -uy;
+                    const ny = ux;
+                    const headLen = 11;
+                    const headW = 5;
+
+                    ctx.fillStyle = `rgba(120,190,255,${alpha})`;
+                    ctx.beginPath();
+                    ctx.moveTo(endX, endY);
+                    ctx.lineTo(endX - ux * headLen + nx * headW, endY - uy * headLen + ny * headW);
+                    ctx.lineTo(endX - ux * headLen - nx * headW, endY - uy * headLen - ny * headW);
+                    ctx.closePath();
+                    ctx.fill();
+                }
             }
         }
 
-        function drawInducedDirection(cx, cy, current) {
-            const absI = Math.abs(current);
-            if (absI < 0.004) return;
+        function drawInducedDirection(cx, cy, rx, ry, loopYOffset, dirSign, alpha, phase) {
+            if (dirSign === 0 || alpha < 0.02) return;
 
-            const clockwise = current < 0;
-            const r = 62;
-            const start = clockwise ? Math.PI * 0.18 : Math.PI * 1.18;
-            const end = clockwise ? Math.PI * 1.72 : Math.PI * 0.72;
-            const col = 'rgba(136,255,136,0.9)';
-
-            ctx.beginPath();
-            ctx.arc(cx, cy, r, start, end, !clockwise);
+            const col = `rgba(107,50,199,${clamp(alpha, 0, 1)})`;
             ctx.strokeStyle = col;
-            ctx.lineWidth = 2.4;
-            ctx.stroke();
 
-            const t = end;
-            const tx = cx + Math.cos(t) * r;
-            const ty = cy + Math.sin(t) * r;
-            const dir = clockwise ? 1 : -1;
-            const ux = Math.cos(t + dir * 0.18);
-            const uy = Math.sin(t + dir * 0.18);
-            const vx = Math.cos(t - dir * 0.18);
-            const vy = Math.sin(t - dir * 0.18);
+            const arrowCount = 18;
+            const step = (Math.PI * 2) / arrowCount;
+            for (let i = 0; i < arrowCount; i++) {
+                const t = phase + i * step;
+                const px = cx + Math.cos(t) * rx;
+                const py = cy + loopYOffset + Math.sin(t) * ry;
+                const tx0 = -Math.sin(t) * rx;
+                const ty0 = Math.cos(t) * ry;
+                const tanLen = Math.hypot(tx0, ty0) || 1;
+                const tx = (dirSign > 0 ? tx0 : -tx0) / tanLen;
+                const ty = (dirSign > 0 ? ty0 : -ty0) / tanLen;
 
-            ctx.beginPath();
-            ctx.moveTo(tx, ty);
-            ctx.lineTo(tx - ux * 11, ty - uy * 11);
-            ctx.lineTo(tx - vx * 11, ty - vy * 11);
-            ctx.closePath();
-            ctx.fillStyle = col;
-            ctx.fill();
+                const bodyLen = 14;
+                const headLen = 7;
+                const headW = 4;
+                const x1 = px - tx * bodyLen * 0.5;
+                const y1 = py - ty * bodyLen * 0.5;
+                const x2 = px + tx * bodyLen * 0.5;
+                const y2 = py + ty * bodyLen * 0.5;
+
+                ctx.beginPath();
+                ctx.moveTo(x1, y1);
+                ctx.lineTo(x2, y2);
+                ctx.stroke();
+
+                const nx = -ty;
+                const ny = tx;
+                ctx.fillStyle = col;
+                ctx.beginPath();
+                ctx.moveTo(x2, y2);
+                ctx.lineTo(x2 - tx * headLen + nx * headW, y2 - ty * headLen + ny * headW);
+                ctx.lineTo(x2 - tx * headLen - nx * headW, y2 - ty * headLen - ny * headW);
+                ctx.closePath();
+                ctx.fill();
+            }
         }
 
         function updateModel() {
@@ -384,29 +489,83 @@
 
             const loopY = 420;
             const northTipY = state.magnetY + 55;
-            const d = Math.max(18, Math.abs(loopY - northTipY));
-            const fluxOneTurn = m * (1 / (1 + Math.pow(d / 85, 2)));
-            state.flux = fluxOneTurn * N;
+            const southTipY = state.magnetY - 55;
+            const distNorth = Math.abs(loopY - northTipY);
+            const distSouth = Math.abs(loopY - southTipY);
+
+            state.facingPole = distNorth <= distSouth ? 'N' : 'S';
+            const facingPoleY = state.facingPole === 'N' ? northTipY : southTipY;
+            const poleDistance = Math.max(18, Math.abs(loopY - facingPoleY));
+
+            state.magnetVelocity = (state.magnetY - state.prevMagnetY) / DT;
+            const motionEps = 0.12;
+            if (state.prevPoleDistance === null) {
+                state.motionState = 'still';
+            } else if (poleDistance < state.prevPoleDistance - motionEps) {
+                state.motionState = 'toward';
+            } else if (poleDistance > state.prevPoleDistance + motionEps) {
+                state.motionState = 'away';
+            } else {
+                state.motionState = 'still';
+            }
+
+            const fluxOneTurn = m * (1 / (1 + Math.pow(poleDistance / 85, 2)));
+            const fluxSign = state.facingPole === 'N' ? 1 : -1;
+            state.flux = fluxOneTurn * N * fluxSign;
 
             state.dFlux = (state.flux - state.prevFlux) / DT;
-            state.emf = -state.dFlux;
-            state.current = state.emf / R;
-            state.smoothCurrent += (state.current - state.smoothCurrent) * 0.24;
-            state.prevFlux = state.flux;
 
-            distVal.textContent = d.toFixed(1);
+            if (state.motionState === 'still') {
+                state.currentDirSign = 0;
+                state.inducedField = 'none';
+                state.emf = 0;
+                state.current = 0;
+                state.arrowAngularSpeed = 0;
+            } else {
+                const caseToward = state.motionState === 'toward';
+                if (state.facingPole === 'N') {
+                    state.currentDirSign = caseToward ? 1 : -1;
+                    state.inducedField = caseToward ? 'up' : 'down';
+                } else {
+                    state.currentDirSign = caseToward ? -1 : 1;
+                    state.inducedField = caseToward ? 'down' : 'up';
+                }
+
+                const emfMag = Math.abs(state.dFlux);
+                state.emf = state.currentDirSign * emfMag;
+                state.current = state.emf / R;
+
+                const speedPx = Math.abs(state.magnetVelocity);
+                state.arrowAngularSpeed = clamp(speedPx * 0.012, 0.9, 10);
+                state.arrowPhase += state.currentDirSign * state.arrowAngularSpeed * DT;
+            }
+
+            state.arrowAlpha += ((state.motionState === 'still' ? 0 : 1) - state.arrowAlpha) * (state.motionState === 'still' ? 0.16 : 0.34);
+            state.smoothCurrent += (state.current - state.smoothCurrent) * 0.45;
+
+            state.prevFlux = state.flux;
+            state.prevPoleDistance = poleDistance;
+            state.prevMagnetY = state.magnetY;
+
+            distVal.textContent = poleDistance.toFixed(1);
             fluxVal.textContent = state.flux.toFixed(3);
             dFluxVal.textContent = state.dFlux.toFixed(3);
             emfVal.textContent = state.emf.toFixed(3);
             currentVal.textContent = state.smoothCurrent.toFixed(3);
 
-            const absI = Math.abs(state.smoothCurrent);
-            if (absI < 0.004) {
+            if (state.motionState === 'still') {
                 dirVal.textContent = 'لا يوجد (فيض ثابت)';
-            } else if (state.smoothCurrent > 0) {
+            } else if (state.currentDirSign > 0) {
                 dirVal.textContent = 'عكس عقارب الساعة';
             } else {
                 dirVal.textContent = 'مع عقارب الساعة';
+            }
+
+            if (state.motionState === 'still') {
+                stateVal.textContent = 'مستقر';
+            } else {
+                const fluxTrend = state.motionState === 'toward' ? 'الفيض يزداد' : 'الفيض ينقص';
+                stateVal.textContent = `${fluxTrend} (${state.facingPole === 'N' ? 'قطب N مواجه' : 'قطب S مواجه'})`;
             }
         }
 
@@ -418,21 +577,62 @@
             const loopY = 420;
             const nTurns = parseInt(turns.value, 10);
             const intensity = clamp(Math.abs(state.dFlux), 0, 1);
+            const midOff = ((nTurns - 1) * 1.1) / 2;
+            const currentRx = 120 - midOff * 0.6;
+            const currentRy = 30 - midOff * 0.25;
+            const currentYOffset = midOff * 0.22;
 
             drawFieldLinesToLoop(cx, state.magnetY, loopY, intensity);
             drawMagnet(cx, state.magnetY);
             drawLoop(cx, loopY, 120, 30, nTurns);
 
-            drawArrow(cx + 82, state.magnetY, cx + 82, state.magnetY + 55, '#88ff88', 2.4);
+            drawArrow(cx + 82, state.magnetY, cx + 82, state.magnetY + 55, '#88ff88', 2.4, 5);
             ctx.fillStyle = '#88ff88';
             ctx.font = 'bold 13px Arial';
             ctx.textAlign = 'center';
             ctx.fillText('v', cx + 98, state.magnetY + 34);
 
-            drawInducedDirection(cx, loopY, state.smoothCurrent);
+            drawInducedDirection(
+                cx,
+                loopY,
+                currentRx,
+                currentRy,
+                currentYOffset,
+                state.currentDirSign,
+                state.arrowAlpha,
+                state.arrowPhase
+            );
 
-            const absI = Math.abs(state.smoothCurrent);
-            const inducedFace = absI < 0.004 ? 'لا قطب ظاهر' : (state.smoothCurrent > 0 ? 'الوجه المقابل: N (تنافر)' : 'الوجه المقابل: S (تجاذب)');
+            if (state.dragging && state.dragDirection !== 0) {
+                if (state.dragDirection < 0) {
+                    const bTop = loopY + 72;
+                    const bBottom = loopY + 176;
+                    drawArrow(cx, bTop, cx, bBottom, '#2f7dff', 8, 15, 0, 0);
+
+                    ctx.fillStyle = '#7db1ff';
+                    ctx.font = 'bold 20px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('B induced', cx + 70, loopY + 80);
+                } else {
+                    const bTop = loopY - 176;
+                    const bBottom = loopY - 72;
+                    drawArrow(cx, bBottom, cx, bTop, '#2f7dff', 8, 0, 15, 1);
+
+                    ctx.fillStyle = '#7db1ff';
+                    ctx.font = 'bold 20px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('B induced', cx + 70, loopY - 80);
+                }
+            }
+
+            let inducedFace = 'لا قطب ظاهر';
+            if (state.motionState !== 'still') {
+                if (state.inducedField === 'up') {
+                    inducedFace = 'المجال المستحث نحو الأعلى';
+                } else if (state.inducedField === 'down') {
+                    inducedFace = 'المجال المستحث نحو الأسفل';
+                }
+            }
 
             ctx.fillStyle = '#ffaa44';
             ctx.font = 'bold 13px Arial';
@@ -476,11 +676,12 @@
         canvas.addEventListener('pointerdown', (e) => {
             const p = pointerPos(e);
             const cx = W * 0.42;
-            const w = 56;
-            const h = 110;
+            const w = 48;
+            const h = 96;
             if (Math.abs(p.x - cx) <= w / 2 + 8 && Math.abs(p.y - state.magnetY) <= h / 2 + 8) {
                 state.dragging = true;
                 state.dragOffsetY = p.y - state.magnetY;
+                state.dragDirection = 0;
                 canvas.classList.add('dragging');
                 canvas.setPointerCapture(e.pointerId);
             }
@@ -489,12 +690,18 @@
         canvas.addEventListener('pointermove', (e) => {
             if (!state.dragging) return;
             const p = pointerPos(e);
-            state.magnetY = clamp(p.y - state.dragOffsetY, 90, 385);
+            const newY = clamp(p.y - state.dragOffsetY, 90, 385);
+            const deltaY = newY - state.magnetY;
+            if (Math.abs(deltaY) > 0.2) {
+                state.dragDirection = deltaY > 0 ? 1 : -1;
+            }
+            state.magnetY = newY;
         });
 
         function stopDrag(e) {
             if (!state.dragging) return;
             state.dragging = false;
+            state.dragDirection = 0;
             canvas.classList.remove('dragging');
             if (typeof e.pointerId === 'number') {
                 canvas.releasePointerCapture(e.pointerId);
@@ -514,12 +721,23 @@
             turns.value = '8';
             resistance.value = '10';
             state.magnetY = 170;
+            state.prevMagnetY = 170;
             state.prevFlux = 0;
             state.flux = 0;
             state.dFlux = 0;
             state.emf = 0;
             state.current = 0;
             state.smoothCurrent = 0;
+            state.magnetVelocity = 0;
+            state.facingPole = 'N';
+            state.motionState = 'still';
+            state.inducedField = 'none';
+            state.currentDirSign = 0;
+            state.prevPoleDistance = null;
+            state.arrowPhase = 0;
+            state.arrowAngularSpeed = 0;
+            state.arrowAlpha = 0;
+            state.dragDirection = 0;
         });
 
         function loop() {
