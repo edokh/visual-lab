@@ -185,7 +185,7 @@
             <button class="btn" id="centerBtn">إرجاع المغناطيس</button>
             <button class="btn" id="flipPolarityBtn">عكس اتجاه المغناطيس</button>
             <button class="btn reset" id="resetBtn">تصفير القراءة</button>
-            <button class="btn" id="toolsGuideBtn" aria-expanded="false" aria-controls="experimentGuide">إظهار الأدوات والتوصيل</button>
+            <button class="btn" id="toolsGuideBtn" aria-expanded="false" aria-controls="experimentGuide">إظهار الدليل</button>
         </div>
 
         <section class="experiment-guide" id="experimentGuide" hidden>
@@ -243,8 +243,6 @@
         const centerBtn = document.getElementById('centerBtn');
         const flipPolarityBtn = document.getElementById('flipPolarityBtn');
         const resetBtn = document.getElementById('resetBtn');
-        const toolsGuideBtn = document.getElementById('toolsGuideBtn');
-        const experimentGuide = document.getElementById('experimentGuide');
 
         const fluxVal = document.getElementById('fluxVal');
         const dFluxVal = document.getElementById('dFluxVal');
@@ -956,19 +954,35 @@
             state.dirLabel = 'لا يوجد';
         });
 
-        toolsGuideBtn.addEventListener('click', () => {
-            const willShow = experimentGuide.hidden;
-            experimentGuide.hidden = !willShow;
-            toolsGuideBtn.textContent = willShow ? 'إخفاء الأدوات والتوصيل' : 'إظهار الأدوات والتوصيل';
-            toolsGuideBtn.setAttribute('aria-expanded', willShow ? 'true' : 'false');
-        });
-
         // Prepare initial flux state so the first frame does not produce a false pulse.
         state.prevFlux = computeFlux();
         state.flux = state.prevFlux;
         loop();
     </script>
-    <script src="js/back-nav.js"></script>
+    <script>
+    (function () {
+        'use strict';
+
+        function setupExperimentGuide() {
+            const btn = document.getElementById('toolsGuideBtn');
+            const panel = document.getElementById('experimentGuide');
+            if (!btn || !panel) return;
+
+            btn.addEventListener('click', function () {
+                const willShow = panel.hidden;
+                panel.hidden = !willShow;
+                btn.textContent = willShow ? '\u0625\u062E\u0641\u0627\u0621 \u0627\u0644\u062F\u0644\u064A\u0644' : '\u0625\u0638\u0647\u0627\u0631 \u0627\u0644\u062F\u0644\u064A\u0644';
+                btn.setAttribute('aria-expanded', willShow ? 'true' : 'false');
+            });
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', setupExperimentGuide, { once: true });
+        } else {
+            setupExperimentGuide();
+        }
+    })();
+</script>
 </body>
 
 </html>

@@ -43,7 +43,8 @@
             height: 100%;
             display: flex;
             flex-direction: column;
-            overflow: hidden;
+            overflow-y: auto;
+            overflow-x: hidden;
         }
 
         canvas {
@@ -171,7 +172,8 @@
     <a class="vl-back" href="index.html" aria-label="العودة">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
             class="back_icon">
-            <path stroke-linecap="round" stroke-width="2.5" stroke-linejoin="round" d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" />
+            <path stroke-linecap="round" stroke-width="2.5" stroke-linejoin="round"
+                d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" />
         </svg>
     </a>
     <div class="lab-container">
@@ -193,7 +195,80 @@
 
             <button class="btn" id="switchBtn">إغلاق المفتاح</button>
             <button class="btn reset" id="resetBtn">إعادة تعيين</button>
+            <button type="button" class="btn" id="toolsGuideBtn" aria-expanded="false"
+                aria-controls="experimentGuide">إظهار الدليل</button>
         </div>
+
+        <section class="experiment-guide" id="experimentGuide" hidden="">
+            <div class="card">
+
+                <h3>أدوات النشاط</h3>
+
+                <ol>
+                    <li>ملفان سلكيان مجوفان مختلفان في أقطارهما يمكن إدخال أحدهما في الآخر التدريجية.</li>
+                    <li>ساق مغناطيسية.</li>
+                    <li>أسلاك توصيل.</li>
+                    <li>بطارية.</li>
+                    <li>مفتاح كهربائي.</li>
+                </ol>
+
+                <h3>خطوات النشاط</h3>
+
+                <ol>
+                    <li>
+                        نربط طرفي أحد الملفين بواسطة أسلاك التوصيل مع طرفي الكلفانومتر.
+                    </li>
+
+                    <li>
+                        نجعل الساق المغناطيسية وقطبها الشمالي موجبًا للملف في حالة سكون بالنسبة للملف،
+                        سنجد أن مؤشر الكلفانومتر يبقى ثابتًا عند صفر التدريجة أي لا يشير إلى انسياب تيار
+                        كهربائي في الدائرة للملف كما في الشكل.
+                    </li>
+
+                    <li>
+                        ندفع الساق المغناطيسية نحو وجهة الملف
+                        <span style="color:red;">(أي في حالة اقتراب من الملف)</span>
+                        فنجد أن المؤشر ينحرف باتجاه معين، وعند سحب الساق بعيدًا عن وجهة الملف
+                        ينحرف المؤشر باتجاه معاكس، وهذا يدل على انسياب تيار مستحث في حالتين
+                        (اقتراب وابتعاد الساق عن وجهة الملف)
+                        <span style="color:red;">كما في الشكل.</span>
+                    </li>
+                </ol>
+
+            </div>
+
+
+            <div class="card">
+
+                <h3>الاستنتاج</h3>
+
+                <p>
+                    نستنتج من الأنشطة الثلاث التي توضح ظاهرة الحث الكهرومغناطيسي:
+                </p>
+
+                <ol>
+                    <li>
+                        تستحث قوة دافعة كهربائية مستحثة
+                        (<strong>E<sub>ind</sub></strong>)
+                        وينساب تيار مستحث
+                        (<strong>I<sub>ind</sub></strong>)
+                        في دائرة كهربائية مغلقة (حلقة موصلة أو ملف سلكي)
+                        فقط عند حصول تغير في الفيض المغناطيسي الذي يخترق تلك الدائرة
+                        لوحدة الزمن على الرغم من عدم توافر بطارية في تلك الدائرة.
+                    </li>
+
+                    <li>
+                        تكون قطبية القوة الدافعة الكهربائية المستحثة
+                        (<strong>E<sub>ind</sub></strong>)
+                        واتجاه التيار المستحث
+                        (<strong>I<sub>ind</sub></strong>)
+                        في الدائرة الكهربائية باتجاه معين عند تزايد الفيض المغناطيسي الذي يخترقها،
+                        ويكونان باتجاه معاكس عند تناقص هذا الفيض.
+                    </li>
+                </ol>
+
+            </div>
+        </section>
 
         <div class="info">
             <span>الفيض Φ: <span class="val" id="fluxVal">0.000</span></span>
@@ -911,7 +986,30 @@
         syncSwitchButton();
         loop();
     </script>
-    <script src="js/back-nav.js"></script>
+    <script>
+        (function () {
+            'use strict';
+
+            function setupExperimentGuide() {
+                const btn = document.getElementById('toolsGuideBtn');
+                const panel = document.getElementById('experimentGuide');
+                if (!btn || !panel) return;
+
+                btn.addEventListener('click', function () {
+                    const willShow = panel.hidden;
+                    panel.hidden = !willShow;
+                    btn.textContent = willShow ? '\u0625\u062E\u0641\u0627\u0621 \u0627\u0644\u062F\u0644\u064A\u0644' : '\u0625\u0638\u0647\u0627\u0631 \u0627\u0644\u062F\u0644\u064A\u0644';
+                    btn.setAttribute('aria-expanded', willShow ? 'true' : 'false');
+                });
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', setupExperimentGuide, { once: true });
+            } else {
+                setupExperimentGuide();
+            }
+        })();
+    </script>
 </body>
 
 </html>

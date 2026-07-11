@@ -163,7 +163,8 @@
     <a class="vl-back" href="index.html" aria-label="العودة">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
             class="back_icon">
-            <path stroke-linecap="round" stroke-width="2.5" stroke-linejoin="round" d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" />
+            <path stroke-linecap="round" stroke-width="2.5" stroke-linejoin="round"
+                d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" />
         </svg>
     </a>
 
@@ -190,7 +191,43 @@
 
             <button class="btn" id="stepBtn">إعادة موضع الساق</button>
             <button class="btn reset" id="resetBtn">إعادة تعيين</button>
+            <button type="button" class="btn" id="toolsGuideBtn" aria-expanded="false"
+                aria-controls="experimentGuide">إظهار الدليل</button>
         </div>
+
+        <section class="experiment-guide" id="experimentGuide" hidden="">
+            <div class="card">
+
+                <h3>سؤال: ما المقصود بالقوة الدافعة الكهربائية الحركية (ε<sub>mot</sub>) وكيف تتولد (تستحث)؟</h3>
+
+                <p class="answer">
+                    الجواب:
+                </p>
+
+                <p>
+                    هي فرق الجهد الكهربائي الذي يتولد على طرفي ساق موصلة نتيجة لحركة الساق داخل
+                    مجال مغناطيسي منتظم، وتعد حالة خاصة من حالات الحث الكهرومغناطيسي.
+                </p>
+
+                <p>
+                    <strong style="color:red;">تتولد:</strong>
+                    بسبب حركة الساق بصورة عمودية على الفيض المغناطيسي، فتتولد قوة مغناطيسية
+                    (<strong>F<sub>B</sub></strong>) يكون اتجاهها موازيًا لمحور الساق،
+                    وتؤثر هذه القوة على الساق وعلى الشحنات الموجودة فيها،
+                    فتتجمع الشحنات الموجبة في أحد طرفي الساق والشحنات السالبة في الطرف الآخر.
+                </p>
+
+                <p>
+                    ويستمر هذا التجمع باستمرار حركة الساق، ونتيجة لذلك يتولد فرق جهد على طرفي
+                    الساق يسمى <strong>القوة الدافعة الكهربائية الحركية</strong>.
+                </p>
+
+                <div class="formula">
+                    ε<sub>mot</sub> = V = Bℓv
+                </div>
+
+            </div>
+        </section>
 
         <div class="info">
             <span>B: <span class="val" id="bVal">0.00</span> T</span>
@@ -561,7 +598,30 @@
 
         loop();
     </script>
-    <script src="js/back-nav.js"></script>
+    <script>
+        (function () {
+            'use strict';
+
+            function setupExperimentGuide() {
+                const btn = document.getElementById('toolsGuideBtn');
+                const panel = document.getElementById('experimentGuide');
+                if (!btn || !panel) return;
+
+                btn.addEventListener('click', function () {
+                    const willShow = panel.hidden;
+                    panel.hidden = !willShow;
+                    btn.textContent = willShow ? '\u0625\u062E\u0641\u0627\u0621 \u0627\u0644\u062F\u0644\u064A\u0644' : '\u0625\u0638\u0647\u0627\u0631 \u0627\u0644\u062F\u0644\u064A\u0644';
+                    btn.setAttribute('aria-expanded', willShow ? 'true' : 'false');
+                });
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', setupExperimentGuide, { once: true });
+            } else {
+                setupExperimentGuide();
+            }
+        })();
+    </script>
 </body>
 
 </html>

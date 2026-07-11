@@ -43,7 +43,8 @@
             height: 100%;
             display: flex;
             flex-direction: column;
-            overflow: hidden;
+            overflow-y: auto;
+            overflow-x: hidden;
         }
 
         canvas {
@@ -170,7 +171,8 @@
     <a class="vl-back" href="index.html" aria-label="العودة">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
             class="back_icon">
-            <path stroke-linecap="round" stroke-width="2.5" stroke-linejoin="round" d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" />
+            <path stroke-linecap="round" stroke-width="2.5" stroke-linejoin="round"
+                d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" />
         </svg>
     </a>
 
@@ -197,7 +199,71 @@
 
             <button class="btn" id="switchBtn">إغلاق المفتاح</button>
             <button class="btn reset" id="resetBtn">إعادة تعيين</button>
+            <button type="button" class="btn" id="toolsGuideBtn" aria-expanded="false"
+                aria-controls="experimentGuide">إظهار الدليل</button>
         </div>
+
+        <section class="experiment-guide" id="experimentGuide" hidden="">
+            <div class="card">
+
+                <h3>نشاط: توضيح الحث الذاتي في الملف</h3>
+
+                <h4>أدوات النشاط</h4>
+
+                <ol>
+                    <li>بطارية ذات فولتية (9V).</li>
+                    <li>مفتاح كهربائي.</li>
+                    <li>ملف سلكي في جوفه قلب من الحديد المطاوع.</li>
+                    <li>مصباح نيون يحتاج (80V) ليتوهج.</li>
+                </ol>
+
+                <h4>خطوات النشاط</h4>
+
+                <ol>
+                    <li>
+                        نربط الملف والمفتاح والبطارية على التوالي مع بعضها.
+                    </li>
+
+                    <li>
+                        نربط مصباح النيون على التوازي مع الملف كما في الشكل.
+                    </li>
+
+                    <li>
+                        لحظة غلق الدائرة نلاحظ عدم توهج المصباح.
+                    </li>
+
+                    <li>
+                        لحظة فتح الدائرة بواسطة المفتاح، نلاحظ توهج مصباح النيون بضوء ساطع
+                        لبرهة قصيرة من الزمن، على الرغم من فصل البطارية عن الدائرة.
+                    </li>
+                </ol>
+
+            </div>
+
+            <div class="card">
+
+                <h3>نستنتج من النشاط</h3>
+
+                <h4>أولًا</h4>
+
+                <p>
+                    عدم توهج مصباح النيون لحظة إغلاق المفتاح كان بسبب أن الفولتية الموضوعة
+                    على طرفيه لم تكن كافية لتوهجه، وذلك لأن نمو التيار من الصفر إلى مقداره
+                    الثابت يكون بطيئًا نتيجة توليد قوة دافعة كهربائية مستحثة في الملف
+                    تعرقل المسبب لها وفقًا لقانون لنز.
+                </p>
+
+                <h4>ثانيًا</h4>
+
+                <p>
+                    توهج مصباح النيون لحظة فتح المفتاح كان بسبب تولد فولتية كبيرة على طرفيه
+                    تكفي لتوهجه، وتفسير ذلك هو نتيجة التناقص السريع للتيار خلال الملف،
+                    فتتولد على طرفي الملف قوة دافعة كهربائية مستحثة ذاتية كبيرة المقدار،
+                    فيعمل الملف في هذه الحالة كمصدر طاقة يجهز المصباح بفولتية تكفي لتوهجه.
+                </p>
+
+            </div>
+        </section>
 
         <div class="info">
             <span>حالة المفتاح: <span class="val" id="swVal">مفتوح</span></span>
@@ -640,7 +706,30 @@
         syncSwitchBtn();
         loop();
     </script>
-    <script src="js/back-nav.js"></script>
+    <script>
+        (function () {
+            'use strict';
+
+            function setupExperimentGuide() {
+                const btn = document.getElementById('toolsGuideBtn');
+                const panel = document.getElementById('experimentGuide');
+                if (!btn || !panel) return;
+
+                btn.addEventListener('click', function () {
+                    const willShow = panel.hidden;
+                    panel.hidden = !willShow;
+                    btn.textContent = willShow ? '\u0625\u062E\u0641\u0627\u0621 \u0627\u0644\u062F\u0644\u064A\u0644' : '\u0625\u0638\u0647\u0627\u0631 \u0627\u0644\u062F\u0644\u064A\u0644';
+                    btn.setAttribute('aria-expanded', willShow ? 'true' : 'false');
+                });
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', setupExperimentGuide, { once: true });
+            } else {
+                setupExperimentGuide();
+            }
+        })();
+    </script>
 </body>
 
 </html>

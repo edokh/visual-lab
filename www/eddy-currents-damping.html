@@ -43,7 +43,8 @@
             height: 100%;
             display: flex;
             flex-direction: column;
-            overflow: hidden;
+            overflow-y: auto;
+            overflow-x: hidden;
         }
 
         canvas {
@@ -196,7 +197,86 @@
 
             <button class="btn play" id="releaseBtn">إطلاق البندول</button>
             <button class="btn reset" id="resetBtn">إعادة تعيين</button>
+            <button type="button" class="btn" id="toolsGuideBtn" aria-expanded="false"
+                aria-controls="experimentGuide">إظهار الدليل</button>
         </div>
+
+        <section class="experiment-guide" id="experimentGuide" hidden="">
+            <div class="card">
+
+                <h3>نشاط: كيفية تقليل تأثير التيارات الدوامة المتولدة في الموصلات</h3>
+
+                <h4>أدوات النشاط</h4>
+
+                <ol>
+                    <li>
+                        بندولان متماثلان، كل منهما بشكل صفيحة مصنوعة من مادة موصلة ضعيفة التمغنط
+                        (ليست فيرومغناطيسية مثل الألمنيوم)، مثبتة بطرف ساق خفيفة من المادة نفسها.
+                        إحدى الصفيحتين مقطعة بشكل شرائح معزولة عن بعضها مثل أسنان المشط،
+                        والأخرى كاملة (غير مقطعة).
+                    </li>
+
+                    <li>
+                        مغناطيس دائم قوي (كثافة فيضه عالية).
+                    </li>
+
+                    <li>
+                        حامل.
+                    </li>
+                </ol>
+
+                <h4>خطوات النشاط</h4>
+
+                <ol>
+                    <li>
+                        نزيح الصفيحتين بإزاحة متساوية إلى أحد جانبي موقع استقرارهما.
+                    </li>
+
+                    <li>
+                        نترك الصفيحتين في آنٍ واحد لتهتز كل منهما بحرية بين قطبي المغناطيس.
+                    </li>
+
+                    <li>
+                        نجد أن بندول الصفيحة الكاملة (غير المقطعة) يتوقف عن الحركة أثناء مروره
+                        خلال الفجوة بين القطبين المغناطيسيين، في حين تمر الصفيحة المقطعة بشكل
+                        أسنان المشط بين القطبين المغناطيسيين وتعبر إلى الجانب الآخر، وتستمر
+                        بالاهتزاز على جانبي منطقة المجال المغناطيسي ذهابًا وإيابًا ولكن بتباطؤ قليل.
+                    </li>
+                </ol>
+
+            </div>
+
+            <div class="card">
+
+                <h3>الاستنتاجات من النشاط</h3>
+
+                <ol>
+                    <li>
+                        عند دخول الصفيحة غير المقطعة إلى المجال المغناطيسي تتولد تيارات دوامة
+                        كبيرة المقدار وباتجاه معين نتيجة تزايد الفيض الذي يخترقها
+                        (<strong>ΔΦ / Δt</strong>) وفقًا لقانون فاراداي.
+                    </li>
+
+                    <li>
+                        عند خروج الصفيحة غير المقطعة من المجال المغناطيسي تكون التيارات الدوامة
+                        باتجاه معاكس نتيجة تناقص الفيض الذي يخترقها
+                        (<strong>ΔΦ / Δt</strong>) وفقًا لقانون فاراداي.
+                    </li>
+
+                    <li>
+                        بسبب دخول الصفيحة وخروجها من المجال المغناطيسي تتولد قوة مغناطيسية
+                        (<strong>F<sub>B</sub></strong>) تعرقل حركة الصفيحة وفق قانون لنز،
+                        وبذلك تتوقف عن الاهتزاز بسبب تلاشي سعة الاهتزاز.
+                    </li>
+
+                    <li>
+                        الصفيحة المقطعة: تكون التيارات الدوامة فيها صغيرة المقدار،
+                        ولذلك يكون تأثيرها في سعة الاهتزاز ضعيفًا جدًا.
+                    </li>
+                </ol>
+
+            </div>
+        </section>
 
         <div class="info">
             <span>الزاوية θ: <span class="val" id="angleVal">0.00</span>°</span>
@@ -467,7 +547,30 @@
         resetState();
         loop();
     </script>
-    <script src="js/back-nav.js"></script>
+    <script>
+        (function () {
+            'use strict';
+
+            function setupExperimentGuide() {
+                const btn = document.getElementById('toolsGuideBtn');
+                const panel = document.getElementById('experimentGuide');
+                if (!btn || !panel) return;
+
+                btn.addEventListener('click', function () {
+                    const willShow = panel.hidden;
+                    panel.hidden = !willShow;
+                    btn.textContent = willShow ? '\u0625\u062E\u0641\u0627\u0621 \u0627\u0644\u062F\u0644\u064A\u0644' : '\u0625\u0638\u0647\u0627\u0631 \u0627\u0644\u062F\u0644\u064A\u0644';
+                    btn.setAttribute('aria-expanded', willShow ? 'true' : 'false');
+                });
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', setupExperimentGuide, { once: true });
+            } else {
+                setupExperimentGuide();
+            }
+        })();
+    </script>
 </body>
 
 </html>

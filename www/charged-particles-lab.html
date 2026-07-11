@@ -158,7 +158,8 @@
     <a class="vl-back" href="index.html" aria-label="العودة">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
             class="back_icon">
-            <path stroke-linecap="round" stroke-width="2.5" stroke-linejoin="round" d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" />
+            <path stroke-linecap="round" stroke-width="2.5" stroke-linejoin="round"
+                d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" />
         </svg>
     </a>
     <div class="lab-container">
@@ -204,7 +205,64 @@
 
             <button class="btn" id="fireBtn">▶ إطلاق</button>
             <button class="btn reset" id="resetBtn">↺ إعادة تعيين</button>
+            <button type="button" class="btn" id="toolsGuideBtn" aria-expanded="false"
+                aria-controls="experimentGuide">إظهار الدليل</button>
         </div>
+
+        <section class="experiment-guide" id="experimentGuide" hidden="">
+            <h2>دليل التجربة</h2>
+
+            <div class="card">
+
+                <h3>
+                    سؤال:
+                    ما تأثير المجال الكهربائي المنتظم على حركة جسم مشحون يتحرك عموديًا على خطوط المجال الكهربائي (E)؟
+                </h3>
+
+                <p class="answer">
+                    الجواب:
+                    سيتأثر الجسم بقوة كهربائية (FE) بمستوى موازٍ لخطوط المجال الكهربائي.
+                </p>
+
+                <div class="formula">
+                    F<sub>E</sub> = qE
+                </div>
+
+                <p>
+                    حيث:
+                    <strong>q</strong> = شحنة الجسم.
+                </p>
+
+            </div>
+
+
+            <div class="card">
+
+                <h3>
+                    سؤال:
+                    ماذا يحصل لجسم مشحون بشحنة موجبة لو تحرك باتجاه عمودي على الفيض المغناطيسي المنتظم؟
+                </h3>
+
+                <p>
+                    (ما التأثير الذي يحدثه المجال المغناطيسي في جسم مشحون؟ أو ما تأثير المجال المغناطيسي على جسم مشحون
+                    سرعته (v) يتحرك عموديًا على خطوط المجال المغناطيسي المنتظم الذي كثافة فيضه (B)؟)
+                </p>
+
+                <p class="answer">
+                    الجواب:
+                    سيتأثر الجسم بقوة مغناطيسية (FB) بمستوى عمودي على خطوط المجال المغناطيسي،
+                    وينحرف عن مساره الأصلي فيتخذ مسارًا دائريًا بسبب تأثير القوة المغناطيسية
+                    العمودية على السرعة.
+                </p>
+
+                <p>وتعطى بالعلاقة الآتية:</p>
+
+                <div class="formula">
+                    F<sub>B</sub> = q(v × B)
+                </div>
+
+            </div>
+        </section>
 
         <div class="info">
             <span>الموضع: (<span class="val" id="posX">—</span>, <span class="val" id="posY">—</span>)</span>
@@ -706,7 +764,30 @@
         loop();
         setTimeout(fireParticle, 200);
     </script>
-    <script src="js/back-nav.js"></script>
+    <script>
+        (function () {
+            'use strict';
+
+            function setupExperimentGuide() {
+                const btn = document.getElementById('toolsGuideBtn');
+                const panel = document.getElementById('experimentGuide');
+                if (!btn || !panel) return;
+
+                btn.addEventListener('click', function () {
+                    const willShow = panel.hidden;
+                    panel.hidden = !willShow;
+                    btn.textContent = willShow ? '\u0625\u062E\u0641\u0627\u0621 \u0627\u0644\u062F\u0644\u064A\u0644' : '\u0625\u0638\u0647\u0627\u0631 \u0627\u0644\u062F\u0644\u064A\u0644';
+                    btn.setAttribute('aria-expanded', willShow ? 'true' : 'false');
+                });
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', setupExperimentGuide, { once: true });
+            } else {
+                setupExperimentGuide();
+            }
+        })();
+    </script>
 </body>
 
 </html>

@@ -237,7 +237,7 @@
     btn.id = 'toolsGuideBtn';
     btn.setAttribute('aria-expanded', 'false');
     btn.setAttribute('aria-controls', 'experimentGuide');
-    btn.textContent = 'إظهار الأدوات والتوصيل';
+    btn.textContent = 'إظهار الدليل';
 
     const panel = document.createElement('section');
     panel.className = 'experiment-guide';
@@ -258,7 +258,7 @@
     btn.addEventListener('click', function () {
       const willShow = panel.hidden;
       panel.hidden = !willShow;
-      btn.textContent = willShow ? 'إخفاء الأدوات والتوصيل' : 'إظهار الأدوات والتوصيل';
+      btn.textContent = willShow ? 'إخفاء الدليل' : 'إظهار الدليل';
       btn.setAttribute('aria-expanded', willShow ? 'true' : 'false');
     });
   }

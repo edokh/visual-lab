@@ -155,7 +155,8 @@
     <a class="vl-back" href="index.html" aria-label="العودة">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
             class="back_icon">
-            <path stroke-linecap="round" stroke-width="2.5" stroke-linejoin="round" d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" />
+            <path stroke-linecap="round" stroke-width="2.5" stroke-linejoin="round"
+                d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" />
         </svg>
     </a>
 
@@ -178,7 +179,88 @@
 
             <button class="btn" id="centerBtn">إرجاع الساق للوسط</button>
             <button class="btn reset" id="resetBtn">تصفير القياسات</button>
+            <button type="button" class="btn" id="toolsGuideBtn" aria-expanded="false"
+                aria-controls="experimentGuide">إظهار الدليل</button>
         </div>
+
+        <section class="experiment-guide" id="experimentGuide" hidden="">
+            <div class="card">
+
+                <h3>سؤال: وضح عمليًا كيف يمكن أن ينساب تيار مستحث في ساق متحركة داخل مجال مغناطيسي منتظم؟</h3>
+
+                <p class="answer">
+                    الجواب:
+                </p>
+
+                <ul>
+                    <li>
+                        يتم ذلك بجعل الساق الموصل ينزلق بسرعة (<strong>v</strong>) نحو اليمين على طول سكة
+                        بشكل حرف (<strong>U</strong>) مربوط معها مصباح كهربائي على التوالي،
+                        والسكة مثبتة على منضدة أفقية.
+                    </li>
+
+                    <li>
+                        وبذلك تشكل المجموعة دائرة مغلقة، فعند تسليط مجال مغناطيسي عمودي على مستوى
+                        هذه الدائرة (بعيدًا عن القارئ)، ستتأثر الشحنات الموجبة في الساق الموصل
+                        بقوة مغناطيسية تدفعها إلى الأعلى، بينما تندفع الشحنات السالبة نحو الطرف الآخر.
+                    </li>
+
+                    <li>
+                        وبما أن الدائرة مغلقة تستمر حركة الشحنات، وبذلك يتوهج المصباح، وهذا يعني
+                        انسياب تيار كهربائي في الدائرة يكون اتجاهه
+                        <strong>(عكس اتجاه عقارب الساعة)</strong>.
+                    </li>
+                </ul>
+
+            </div>
+
+            <div class="card">
+
+                <h3>سؤال: ما عدد القوى المغناطيسية الناتجة عند حركة ساق موصل بسرعة (v) بمسار مغلق بشكل حرف (U) داخل مجال
+                    مغناطيسي منتظم؟</h3>
+
+                <p class="answer">
+                    الجواب:
+                </p>
+
+                <p>
+                    <strong>قوتان:</strong>
+                </p>
+
+                <ol>
+                    <li>
+                        <strong>القوة الأولى (F<sub>B1</sub>):</strong>
+                        هي القوة التي تفصل بين الشحنات السالبة والموجبة في الساق المتحركة،
+                        وبذلك ينشأ فرق الجهد على طرفي الساق
+                        <strong>(القوة الدافعة الكهربائية الحركية ε<sub>mot</sub>)</strong>.
+                    </li>
+
+                    <li>
+                        <strong>القوة الثانية (F<sub>B2</sub>):</strong>
+                        هي القوة المعاكسة لحركة الساق، والتي تنشأ عندما تكون الساق المتحركة
+                        في دائرة كهربائية مغلقة، فينساب تيار مستحث في الساق وباتجاه عمودي
+                        على المجال المغناطيسي، فتظهر هذه القوة وتؤثر عموديًا على الساق
+                        وعكس اتجاه سرعة الساق (<strong>v</strong>)، فتسبب تباطؤها.
+                    </li>
+                </ol>
+
+                <p>
+                    ولكي نتخلص من تأثير هذه القوة ونجعل الساق تتحرك بسرعة ثابتة،
+                    يتطلب تسليط قوة خارجية تسمى
+                    <strong>القوة الساحبة (F<sub>pull</sub>)</strong>
+                    تسحب الساق، ويكون مقدارها:
+                </p>
+
+                <div class="formula">
+                    F<sub>pull</sub> = F<sub>B2</sub>
+                </div>
+
+                <p>
+                    فتكون حركة الساق منتظمة.
+                </p>
+
+            </div>
+        </section>
 
         <div class="info">
             <span>سرعة الساق v: <span class="val" id="vVal">0.00</span> m/s</span>
@@ -280,7 +362,7 @@
 
         function drawLamp(x, y, intensity) {
             const glow = clamp(intensity, 0, 1);
-            
+
             // الهالة الضوئية
             if (glow > 0.01) {
                 const g = ctx.createRadialGradient(x, y - 2, 2, x, y - 2, 45);
@@ -302,7 +384,7 @@
             ctx.beginPath();
             ctx.arc(x, y, 14, 0, Math.PI * 2);
             ctx.fill();
-            
+
             ctx.strokeStyle = '#7a8fa3';
             ctx.lineWidth = 1.8;
             ctx.beginPath();
@@ -341,7 +423,7 @@
             ctx.lineTo(x - 4, y + 24);
             ctx.closePath();
             ctx.fill();
-            
+
             ctx.strokeStyle = '#5a4a3a';
             ctx.lineWidth = 0.8;
             ctx.stroke();
@@ -383,32 +465,32 @@
         // Build complete circuit path as array of points
         function buildCircuitPath(L) {
             const path = [];
-            
+
             // Top of rod → left along top rail → lamp top connection
             for (let x = L.rodX; x >= L.lampX; x -= 8) path.push([x, L.topY]);
             for (let x = L.lampX; x >= L.leftX; x -= 8) path.push([x, L.topY]);
-            
+
             // Top rail to lamp top
             for (let y = L.topY; y <= L.lampY - 16; y += 8) path.push([L.lampX, y]);
-            
+
             // Through lamp (vertical)
             for (let y = L.lampY - 16; y <= L.lampY + 16; y += 5) path.push([L.lampX, y]);
-            
+
             // Lamp bottom to bottom rail
             for (let y = L.lampY + 16; y <= L.bottomY; y += 8) path.push([L.lampX, y]);
-            
+
             // Along bottom rail to left
             for (let x = L.lampX; x >= L.leftX; x -= 8) path.push([x, L.bottomY]);
-            
+
             // Up the rod on left side (from bottom to top)
             for (let y = L.bottomY; y >= L.topY; y -= 8) path.push([L.leftX, y]);
-            
+
             // Along top rail back to rod
             for (let x = L.leftX; x <= L.rodX; x += 8) path.push([x, L.topY]);
-            
+
             // Up through the rod itself
             for (let y = L.topY; y <= L.bottomY; y += 8) path.push([L.rodX, y]);
-            
+
             return path;
         }
 
@@ -427,7 +509,7 @@
         function getPositionOnPath(path, distance) {
             distance = distance % getPathLength(path);
             if (distance < 0) distance = getPathLength(path) + distance;
-            
+
             let currentDist = 0;
             for (let i = 1; i < path.length; i++) {
                 const dx = path[i][0] - path[i - 1][0];
@@ -448,25 +530,25 @@
         // Draw moving particles
         function drawParticles(path, speed, direction, intensity) {
             if (!path || path.length < 2 || intensity < 0.05) return;
-            
+
             const pathLen = getPathLength(path);
             const particleCount = Math.max(30, Math.floor(pathLen / 15));
             const particleSpacing = pathLen / particleCount;
             const offset = (state.animTime * speed * direction * 100) % pathLen;
-            
+
             for (let i = 0; i < particleCount; i++) {
                 const distOnPath = (i * particleSpacing + offset) % pathLen;
                 const pos = getPositionOnPath(path, distOnPath);
-                
+
                 // Draw glowing particle
                 const alpha = 0.5 + intensity * 0.5;
                 const size = 2.5 + intensity * 1.5;
-                
+
                 ctx.fillStyle = `rgba(255,200,100,${alpha})`;
                 ctx.beginPath();
                 ctx.arc(pos[0], pos[1], size, 0, Math.PI * 2);
                 ctx.fill();
-                
+
                 // Glow effect
                 if (intensity > 0.3) {
                     ctx.fillStyle = `rgba(255,220,150,${alpha * 0.4})`;
@@ -699,7 +781,30 @@
 
         loop();
     </script>
-    <script src="js/back-nav.js"></script>
+    <script>
+        (function () {
+            'use strict';
+
+            function setupExperimentGuide() {
+                const btn = document.getElementById('toolsGuideBtn');
+                const panel = document.getElementById('experimentGuide');
+                if (!btn || !panel) return;
+
+                btn.addEventListener('click', function () {
+                    const willShow = panel.hidden;
+                    panel.hidden = !willShow;
+                    btn.textContent = willShow ? '\u0625\u062E\u0641\u0627\u0621 \u0627\u0644\u062F\u0644\u064A\u0644' : '\u0625\u0638\u0647\u0627\u0631 \u0627\u0644\u062F\u0644\u064A\u0644';
+                    btn.setAttribute('aria-expanded', willShow ? 'true' : 'false');
+                });
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', setupExperimentGuide, { once: true });
+            } else {
+                setupExperimentGuide();
+            }
+        })();
+    </script>
 </body>
 
 </html>
