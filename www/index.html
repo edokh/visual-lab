@@ -2,149 +2,121 @@
 <html lang="ar" dir="rtl">
 
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>مختبر VisualLab - قائمة التجارب</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VisualLab</title>
+
     <style>
         * {
-            box-sizing: border-box;
             margin: 0;
             padding: 0;
+            box-sizing: border-box;
         }
 
         body {
-            font-family: 'Segoe UI', Arial, sans-serif;
-            background: #0f0f1a;
-            color: #e0e0e0;
-            min-height: 100vh;
-            padding: 24px;
-            overflow-x: hidden;
+            font-family: "Segoe UI", Arial, sans-serif;
+            background: radial-gradient(circle at center, #1d2245 0%, #0f0f1a 100%);
+            color: white;
+            height: 100vh;
+            overflow: hidden;
         }
 
-        .page {
-            max-width: 1100px;
-            margin: 0 auto;
-            background: #1a1a2e;
-            border: 1px solid #2a2a4a;
-            padding: 22px;
-            min-height: 80vh;
+        .landing {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            text-align: center;
+            animation: fadeIn 1s ease;
         }
 
-        h1 {
-            font-size: 1.5rem;
-            color: #88ccff;
-            margin-bottom: 8px;
+        .logo {
+            font-size: 4rem;
+            color: #7fc8ff;
+            font-weight: bold;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
         }
 
-        .sub {
-            color: #99aacc;
-            margin-bottom: 18px;
-            font-size: 0.95rem;
+        .subtitle {
+            font-size: 1.4rem;
+            color: #d0d8ff;
+            margin-bottom: 60px;
         }
 
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-            gap: 14px;
-            margin-top: 2rem;
+        .author {
+            font-size: 1.2rem;
+            color: #c8d8ff;
+            margin-bottom: 35px;
         }
 
-        .card {
-            display: block;
-            text-decoration: none;
-            color: inherit;
-            background: #141428;
-            border: 1px solid #2a2a4a;
-            padding: 14px;
-            transition: border-color 0.15s ease, transform 0.15s ease;
+        .start-btn {
+            background: linear-gradient(135deg, #4a8cff, #6ab7ff);
+            color: white;
+            border: none;
+            border-radius: 40px;
+            padding: 18px 60px;
+            font-size: 1.4rem;
             cursor: pointer;
+            transition: .25s;
+            box-shadow: 0 0 25px rgba(74, 140, 255, .4);
         }
 
-        .card:hover {
-            border-color: #4a8cff;
-            transform: translateY(-2px);
+        .start-btn:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 0 35px rgba(74, 140, 255, .7);
         }
 
-        .card h2 {
-            font-size: 1rem;
-            color: #b8e2ff;
-            margin-bottom: 8px;
+        .footer {
+            position: absolute;
+            bottom: 30px;
+            width: 100%;
+            text-align: center;
+            color: #7c88aa;
+            font-size: .9rem;
         }
 
-        .card p {
-            color: #b0c3dc;
-            font-size: 0.85rem;
-            line-height: 1.6;
-            margin-bottom: 12px;
-            min-height: 64px;
-        }
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(25px);
+            }
 
-        .tip {
-            margin-top: 14px;
-            color: #88ddff;
-            font-size: 0.8rem;
-            background: #1a1a30;
-            border: 1px solid #2a2a4a;
-            padding: 8px 10px;
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
     </style>
+
 </head>
 
 <body>
-    <div class="page">
-        <h1>VisualLab - قائمة التجارب</h1>
-        <div class="grid">
-            <a class="card" href="charged-particles-lab.html" aria-label="فتح تجربة حركة الجسيمات المشحونة">
-                <h2>حركة الجسيمات المشحونة</h2>
-                <p>تجربة الحقول الكهربائية والمغناطيسية وتأثيرها على مسار جسيم مشحون.</p>
-            </a>
 
-            <a class="card" href="electromagnetic-induction.html" aria-label="فتح تجربة الحث الكهرومغناطيسي">
-                <h2>الحث الكهرومغناطيسي (مغناطيس + ملف)</h2>
-                <p>تحريك المغناطيس قرب الملف ومشاهدة تغير قراءة الأمبير واتجاه التيار المستحث.</p>
-            </a>
+    <div class="landing">
 
-            <a class="card" href="faraday-discovery.html" aria-label="فتح تجربة اكتشاف فاراداي">
-                <h2>اكتشاف فاراداي (ملفين)</h2>
-                <p>دائرة ابتدائية مع بطارية ومفتاح ودائرة ثانوية مع جلفانومتر وحلقة حديد مغلقة.</p>
-            </a>
-
-            <a class="card" href="induction-activity-11.html" aria-label="فتح نشاط 11 للحث الكهرومغناطيسي">
-                <h2>نشاط 11 للحث الكهرومغناطيسي</h2>
-                <p>أوضاع متعددة: تحريك مغناطيس، تحريك ملف ابتدائي، وتجربة فتح/غلق المفتاح.</p>
-            </a>
-
-            <a class="card" href="motional-emf.html" aria-label="فتح نشاط 12: القوة الدافعة الحركية">
-                <h2>نشاط 12: القوة الدافعة الحركية</h2>
-                <p>ساق موصلة تتحرك في مجال مغناطيسي مع عرض حالات (12-a/12-b/12-c) وعلاقة ε = vBℓ.</p>
-            </a>
-
-            <a class="card" href="induced-current-rails.html" aria-label="فتح نشاط 13: التيار المستحث في السكة">
-                <h2>نشاط 13: التيار المستحث في السكة</h2>
-                <p>ساق موصلة تنزلق داخل مجال مغناطيسي ضمن دائرة مع مصباح، مع تطبيق I = (vBℓ) / R.</p>
-            </a>
-
-            <a class="card" href="induction-energy-conservation.html" aria-label="فتح نشاط 14: حفظ الطاقة في الحث">
-                <h2>نشاط 14: حفظ الطاقة في الحث</h2>
-                <p>سحب الساق بسرعة ثابتة وإظهار العلاقات Fpull = IℓB و Pmech ≈ Pelec بشكل مباشر.</p>
-            </a>
-
-            <a class="card" href="lenz-law.html" aria-label="فتح قانون لنز">
-                <h2>قانون لنز (10-2)</h2>
-                <p>تحريك مغناطيس قرب حلقة موصلة ومتابعة انعكاس اتجاه التيار المستحث حسب تغير الفيض.</p>
-            </a>
-
-            <a class="card" href="eddy-currents-damping.html" aria-label="فتح نشاط التيارات الدوامية">
-                <h2>نشاط 2: التيارات الدوامية</h2>
-                <p>بندول بصفيحة معدنية يمر بين قطبي مغناطيس مع مقارنة التخميد بين الصفيحة الكاملة والمشقوقة.</p>
-            </a>
-
-            <a class="card" href="self-induction-neon.html" aria-label="فتح نشاط 3: الحث الذاتي والنيون">
-                <h2>نشاط 3: الحث الذاتي والنيون</h2>
-                <p>ملف مع بطارية ومفتاح ومصباح نيون على التوازي، لإظهار نبضة الجهد المستحث عند فتح الدائرة.</p>
-            </a>
+        <div class="logo"> مختبر الفيزياء
         </div>
+
+        <div class="subtitle">
+            تجربة تفاعلية لتعلم الفيزياء بطريقة ممتعة
+        </div>
+
+        <div class="author">
+            إعداد الأستاذ<br>
+            <strong>أبــاذر إسمــاعيل</strong>
+        </div>
+        <button class="start-btn" onclick="window.location.href='chapters.html'">
+            ابدأ
+        </button>
+
     </div>
+
+    <div class="footer">
+        © VisualLab
+    </div>
+
 </body>
 
 </html>

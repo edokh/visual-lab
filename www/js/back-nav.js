@@ -264,7 +264,7 @@
   }
 
   function goHome() {
-    window.location.href = 'index.html';
+    window.location.href = 'chapter2.html';
   }
 
   if (document.readyState === 'loading') {
