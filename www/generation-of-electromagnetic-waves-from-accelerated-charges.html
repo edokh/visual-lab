@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>محاكاة توليد الموجات الكهرومغناطيسية ثلاثية الأبعاد</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap">
+  <link rel="stylesheet" href="css/back-nav.css">
+  <style>
+    :root {
+      --bg: #0a0f1f;
+      --panel: #121a33;
+      --panel2: #18224a;
+      --ink: #eaf0ff;
+      --mut: #93a0c4;
+      --line: #2a3664;
+      --E: #ff9a3c;
+      --into: #3ddc84;
+      --out: #ff5d62;
+      --pos: #e5484d;
+      --neg: #4f6cf0;
+      --acc: #e04a9a;
+      --acc2: #6a5cff;
+      color-scheme: dark;
+      box-sizing: border-box;
+      padding-top: env(safe-area-inset-top, 0px);
+      padding-bottom: env(safe-area-inset-bottom, 0px)
+    }
+
+    @media (prefers-color-scheme:light) {
+      :root:not([data-theme="dark"]) {
+        --bg: #eef2fb;
+        --panel: #fff;
+        --panel2: #e6ecfa;
+        --ink: #10162b;
+        --mut: #4b587c;
+        --line: #c5d0ee;
+        --E: #e0690a;
+        --into: #1f9d55;
+        --out: #d92d33;
+        --pos: #d63a3f;
+        --neg: #3550d8;
+        --acc: #c93a85;
+        --acc2: #4b3de0;
+        color-scheme: light
+      }
+    }
+
+    :root[data-theme="dark"] {
+      --bg: #0a0f1f;
+      color-scheme: dark
+    }
+
+    * {
+      box-sizing: border-box
+    }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%
+    }
+
+    [hidden] {
+      display: none !important
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--ink);
+      font-family: Tajawal, "Segoe UI", Tahoma, sans-serif;
+      line-height: 1.5
+    }
+
+    header {
+      padding: 14px 18px 6px
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 1.35rem;
+      font-weight: 700
+    }
+
+    .eq {
+      margin: 4px 0 0;
+      color: var(--mut);
+      font-size: .95rem;
+      min-height: 1.5em
+    }
+
+    .eq b {
+      color: var(--ink)
+    }
+
+    .wrap {
+      direction: ltr;
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 12px;
+      padding: 10px 14px 18px
+    }
+
+    .wrap>* {
+      direction: rtl
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px 14px
+    }
+
+    .side {
+      display: flex;
+      flex-direction: column;
+      gap: 12px
+    }
+
+    h2 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+      font-weight: 700
+    }
+
+    .reads {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin: 0
+    }
+
+    .reads div {
+      background: var(--panel2);
+      border-radius: 8px;
+      padding: 6px 10px
+    }
+
+    .reads dt {
+      font-size: .78rem;
+      color: var(--mut)
+    }
+
+    .reads dd {
+      margin: 0;
+      font-size: 1.05rem;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums
+    }
+
+    .reads small {
+      font-weight: 400;
+      color: var(--mut);
+      font-size: .75rem
+    }
+
+    label {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      font-size: .9rem;
+      margin-bottom: 4px
+    }
+
+    output {
+      font-weight: 700;
+      direction: ltr
+    }
+
+    input[type=range] {
+      width: 100%;
+      accent-color: var(--acc);
+      margin: 0 0 10px
+    }
+
+    button {
+      font: inherit;
+      font-size: .88rem;
+      color: var(--ink);
+      background: var(--panel2);
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 6px 13px;
+      cursor: pointer
+    }
+
+    button:hover {
+      border-color: var(--acc2)
+    }
+
+    button[aria-pressed=true] {
+      background: linear-gradient(90deg, var(--acc), var(--acc2));
+      border-color: transparent;
+      color: #fff
+    }
+
+    button:focus-visible,
+    input:focus-visible,
+    canvas:focus-visible {
+      outline: 2px solid var(--E);
+      outline-offset: 2px
+    }
+
+    .hint {
+      margin: 0;
+      font-size: .88rem;
+      color: var(--mut);
+      border-right: 3px solid var(--acc);
+      padding-right: 10px;
+      /* min-height = 4 lines */
+      min-height: calc(1.5rem * 4 + 8px)
+
+    }
+
+    .main {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      min-width: 0
+    }
+
+    .stage {
+      position: relative;
+      flex: 1;
+      min-height: 420px;
+      background: radial-gradient(ellipse at 50% 45%, var(--panel2), var(--panel) 75%);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      overflow: hidden
+    }
+
+    canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      touch-action: none;
+      cursor: grab
+    }
+
+    canvas:active {
+      cursor: grabbing
+    }
+
+    .tip {
+      position: absolute;
+      bottom: 8px;
+      left: 12px;
+      font-size: .78rem;
+      color: var(--mut);
+      pointer-events: none
+    }
+
+    .bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      justify-content: center
+    }
+
+    .experiment-guide {
+      margin: 0 14px 18px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px 18px
+    }
+
+    .experiment-guide h2 {
+      font-size: 1.1rem
+    }
+
+    .experiment-guide h3 {
+      font-size: .95rem;
+      margin: 10px 0 4px;
+      color: var(--E)
+    }
+
+    .experiment-guide ul {
+      margin: 0;
+      padding-inline-start: 20px;
+      color: var(--mut);
+      font-size: .9rem
+    }
+
+    @media (max-width:860px) {
+      .wrap {
+        grid-template-columns: 1fr
+      }
+
+      .stage {
+        min-height: 360px
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <a class="vl-back" href="chapter-2.html" aria-label="العودة">
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+      class="back_icon">
+      <path stroke-linecap="round" stroke-width="2.5" stroke-linejoin="round"
+        d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" />
+    </svg>
+  </a>
+  <header>
+    <h1>توليد الموجات الكهرومغناطيسية</h1>
+    <p class="eq" id="eq" aria-live="polite"></p>
+  </header>
+  <div class="wrap">
+    <aside class="side">
+      <section class="panel" aria-label="القراءات">
+        <h2>القراءات</h2>
+        <dl class="reads">
+          <div>
+            <dt>الطول الموجي λ</dt>
+            <dd id="rl"></dd>
+          </div>
+          <div>
+            <dt>التردد f</dt>
+            <dd id="rf"></dd>
+          </div>
+          <div>
+            <dt>الزمن الدوري T</dt>
+            <dd id="rt"></dd>
+          </div>
+          <div>
+            <dt>سرعة الانتشار v</dt>
+            <dd id="rv"></dd>
+          </div>
+          <div>
+            <dt>القوة الدافعة emf</dt>
+            <dd id="rq"></dd>
+          </div>
+          <div>
+            <dt>حركة الشحنات الموجبة</dt>
+            <dd id="ri"></dd>
+          </div>
+        </dl>
+      </section>
+      <section class="panel" aria-label="التحكم">
+        <label for="fq">تردد المذبذب <output id="fqo">60 MHz</output></label>
+        <input id="fq" type="range" min="40" max="120" step="1" value="60">
+        <label for="sp">سرعة العرض <output id="spo">×1</output></label>
+        <input id="sp" type="range" min="0.25" max="2" step="0.25" value="1">
+        <h2>مراحل التوليد</h2>
+        <div class="bar" id="stages" style="justify-content:flex-start">
+          <button data-g="8.15">1 · شكل 7</button>
+          <button data-g="8.5">2 · شكل 8</button>
+          <button data-g="8.85">3 · شكل 9</button>
+          <button data-g="9.35">4 · شكل 10</button>
+        </div>
+      </section>
+      <p class="hint" id="hint"></p>
+    </aside>
+    <div class="main">
+      <div class="stage"><canvas id="cv" tabindex="0"
+          aria-label="مشهد ثلاثي الأبعاد لتوليد الموجات الكهرومغناطيسية، اسحب لتدويره أو استخدم الأسهم"></canvas><span
+          class="tip">اسحب لتدوير المشهد</span></div>
+      <div class="bar">
+        <button id="tE" aria-pressed="true">خطوط المجال الكهربائي</button>
+        <button id="tB" aria-pressed="true">حلقات المجال المغناطيسي</button>
+        <button id="tV" aria-pressed="true">الأسهم</button>
+        <button id="tL" aria-pressed="true">التسميات</button>
+        <button id="tP" aria-pressed="false">إيقاف مؤقت</button>
+        <button data-v="0.6,0.38">زاوية افتراضية</button>
+        <button data-v="0,0.02">منظر أمامي (كالكتاب)</button>
+        <button data-v="0,1.45">من الأعلى</button>
+        <button id="toolsGuideBtn" type="button" aria-expanded="false" aria-controls="experimentGuide">إظهار
+          الدليل</button>
+      </div>
+    </div>
+  </div>
+  <section class="experiment-guide" id="experimentGuide" hidden>
+    <h2>دليل التجربة</h2>
+    <h3>الأدوات</h3>
+    <ul>
+      <li>شريط تردد المذبذب لتغيير التردد وبالتالي الطول الموجي.</li>
+      <li>شريط سرعة العرض لإبطاء الحركة أو تسريعها.</li>
+      <li>أزرار المراحل (1 إلى 4) تنقلك إلى اللحظات المقابلة للأشكال 7 و8 و9 و10 وتوقف الحركة.</li>
+      <li>أزرار العرض لإظهار خطوط المجال الكهربائي وحلقات المجال المغناطيسي والأسهم والتسميات، وأزرار زوايا العرض.</li>
+    </ul>
+    <h3>طريقة الاستخدام</h3>
+    <ul>
+      <li>اسحب المشهد لتدويره ولاحظ أن الحقل متماثل حول الساقين: خطوط E مغلقة في مستويات تمر بالساقين، وخطوط B حلقات
+        أفقية حولهما.</li>
+      <li>تابع المرحلة 2 (emf عظمى وخطوط متباعدة) ثم المرحلة 3 (تتقارب الخطوط وتنغلق حلقات تنفصل عن الهوائي).</li>
+      <li>في المرحلة 4 تنقلب القطبية فينعكس المجال الكهربائي وتنعكس حلقات B.</li>
+      <li>اختر «منظر أمامي» لتظهر الرموز ⊕ و⊙ كما في الكتاب.</li>
+    </ul>
+    <h3>المحصلة والغرض</h3>
+    <ul>
+      <li>الشحنات المعجّلة تولّد مجالين كهربائيًا ومغناطيسيًا متذبذبين ينتشران في الفضاء.</li>
+      <li>الحلقة الخضراء تقابل ⊕ (داخل الورقة) والحمراء تقابل ⊙ (خارجها) عند اليمين في المنظر الأمامي.</li>
+    </ul>
+  </section>
+  <script>
+    const C = 3e8, TAU = Math.PI * 2, FR = [.4, .7, 1], AZ = 8, R = 9, Lr = 1.7, gap = .15, FY = -3.4;
+    const S = { f: 60, spd: 1, u: 8.15, E: 1, B: 1, V: 1, Lb: 1, paused: matchMedia('(prefers-reduced-motion:reduce)').matches };
+    let yaw = .6, pitch = .38, tyaw = .6, tpitch = .38, drag = null, th = {}, lastStage = '';
+    const $ = id => document.getElementById(id);
+    const cv = $('cv'), ctx = cv.getContext('2d'); let cw = 0, ch = 0;
+    const lamM = () => C / (S.f * 1e6), fmt = (v, d = 2) => v.toFixed(d), cl = (v, a, b) => Math.max(a, Math.min(b, v));
+    function readTheme() { const s = getComputedStyle(document.documentElement);['panel', 'ink', 'mut', 'line', 'E', 'into', 'out', 'pos', 'neg'].forEach(k => th[k] = s.getPropertyValue('--' + k).trim()) }
+    function resize() { const r = cv.getBoundingClientRect(), d = Math.min(devicePixelRatio || 1, 2); cw = r.width; ch = r.height; cv.width = cw * d; cv.height = ch * d; ctx.setTransform(d, 0, 0, d, 0, 0) }
+    new ResizeObserver(resize).observe(cv);
+    matchMedia('(prefers-color-scheme:dark)').addEventListener('change', readTheme);
+
+    function P(x, y, z) {
+      const cy = Math.cos(yaw), sy = Math.sin(yaw), cp = Math.cos(pitch), sp = Math.sin(pitch);
+      const x1 = x * cy + z * sy, z1 = -x * sy + z * cy, y2 = y * cp + z1 * sp, z2 = -y * sp + z1 * cp, s = 26 / (26 + z2), k = Math.min(cw / 19, ch / 9.5);
+      return [cw / 2 + x1 * s * k, ch / 2 - y2 * s * k, s, k]
+    }
+    function path(fn, n, col, w) { ctx.beginPath(); for (let i = 0; i <= n; i++) { const p = fn(i); i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]) } ctx.strokeStyle = col; ctx.lineWidth = w; ctx.lineJoin = 'round'; ctx.stroke() }
+    function ln(a, b, col, w) { ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.strokeStyle = col; ctx.lineWidth = w; ctx.stroke() }
+    function head(x, y, dx, dy, col) { const a = Math.atan2(dy, dx), h = 7; ctx.beginPath(); ctx.moveTo(x + h * Math.cos(a), y + h * Math.sin(a)); ctx.lineTo(x + h * Math.cos(a + 2.5), y + h * Math.sin(a + 2.5)); ctx.lineTo(x + h * Math.cos(a - 2.5), y + h * Math.sin(a - 2.5)); ctx.closePath(); ctx.fillStyle = col; ctx.fill() }
+    function tag(txt, x, y, col, dir) { ctx.font = '700 13px Tajawal,sans-serif'; ctx.direction = dir || 'rtl'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; const w = ctx.measureText(txt).width + 16, g = ctx.globalAlpha; ctx.globalAlpha = .88; ctx.fillStyle = th.panel; ctx.beginPath(); ctx.roundRect(x - w / 2, y - 12, w, 24, 12); ctx.fill(); ctx.globalAlpha = 1; ctx.strokeStyle = col; ctx.lineWidth = 1.2; ctx.stroke(); ctx.fillStyle = th.ink; ctx.fillText(txt, x, y); ctx.globalAlpha = g }
+    function sym(x, y, into) {
+      const c = into ? th.into : th.out; ctx.beginPath(); ctx.arc(x, y, 7, 0, TAU); ctx.fillStyle = th.panel; ctx.fill(); ctx.strokeStyle = c; ctx.lineWidth = 1.8; ctx.stroke(); ctx.beginPath();
+      if (into) { ctx.moveTo(x - 4, y - 4); ctx.lineTo(x + 4, y + 4); ctx.moveTo(x + 4, y - 4); ctx.lineTo(x - 4, y + 4); ctx.stroke() } else { ctx.arc(x, y, 2.6, 0, TAU); ctx.fillStyle = c; ctx.fill() }
+    }
+    function geo(g, lam) {
+      if (g < 1) { const r = lam / 2 * g; return { cx: r / 2, w: r / 2, H: Lr, th: Math.PI * (.55 + .45 * g), att: 1, bd: 0 } }
+      return { cx: (g - 1) * lam / 2 + lam / 4, w: lam / 4, H: Lr * (1 + .8 * Math.min(1, (g - 1) / 3)), th: Math.PI, att: 0, bd: lam * .45 * Math.min(1, (g - 1) / 2.5) }
+    }
+
+    function draw() {
+      const lam = lamM(), u = S.u, Q = Math.sin(Math.PI * u), I = Math.cos(Math.PI * u);
+      ctx.clearRect(0, 0, cw, ch);
+      // floor
+      ctx.globalAlpha = .7;
+      for (let r = 1.5; r <= R; r += 1.5)path(i => { const a = TAU * i / 72; return P(r * Math.cos(a), FY, r * Math.sin(a)) }, 72, th.line, 1);
+      for (let k = 0; k < AZ; k++) { const a = TAU * k / AZ; ln(P(0, FY, 0), P(R * Math.cos(a), FY, R * Math.sin(a)), th.line, 1) }
+      ctx.globalAlpha = 1;
+      // loops
+      const m0 = Math.floor(u), rings = []; let lab = null, lamAt = null;
+      for (let m = m0; m > m0 - 60; m--) {
+        const g = u - m, s = ((m % 2) + 2) % 2 ? -1 : 1, o = geo(g, lam);
+        if (o.cx > R) break;
+        const al = cl((R - o.cx) / (lam * .6), 0, 1);
+        for (const f of FR) {
+          const cx = o.att ? f * o.cx : o.cx, w = Math.max(o.w * f, .001), h = o.H * f;
+          if (S.E) {
+            ctx.globalAlpha = al * .85;
+            for (let k = 0; k < AZ; k++) {
+              const ph = TAU * k / AZ, pt = a => { const r = Math.max(.02, cx + w * Math.cos(a) - o.bd * f * Math.sin(a) * Math.sin(a)); return P(r * Math.cos(ph), -h * Math.sin(a), r * Math.sin(ph)) };
+              path(i => pt(-o.th + 2 * o.th * i / 48), 48, th.E, 1.6);
+              if (S.V && g > .12 && k % 4 === 0) (o.th >= Math.PI ? [0, Math.PI / 2, Math.PI, -Math.PI / 2] : [0, o.th * .5, -o.th * .5]).forEach(a => { const p = pt(a), q = pt(a + .04); head(p[0], p[1], (q[0] - p[0]) * s, (q[1] - p[1]) * s, th.E) })
+            }
+          }
+          if (g > .2) { rings.push([cx + w, s, al]); if (!o.att && f < 1 && cx - w > .05) rings.push([cx - w, -s, al]) }
+        }
+        if (!o.att && g > 1.3 && !lab) { lab = P(Math.max(.1, o.cx - o.bd), o.H + .4, 0); lamAt = o.cx + o.w }
+      }
+      ctx.globalAlpha = 1;
+      // magnetic rings
+      if (S.B) {
+        const fr = Math.abs(Math.sin(yaw)) < .3 && Math.cos(yaw) > 0 && Math.abs(pitch) < .45;
+        rings.forEach(([r, s, al]) => {
+          const c = s > 0 ? th.into : th.out; ctx.globalAlpha = al * .85;
+          path(i => { const a = TAU * i / 72; return P(r * Math.cos(a), 0, r * Math.sin(a)) }, 72, c, 1.5);
+          if (S.V) [0, 1, 2, 3].forEach(j => { const a = j * Math.PI / 2 + .4, p = P(r * Math.cos(a), 0, r * Math.sin(a)), q = P(r * Math.cos(a + s * .05), 0, r * Math.sin(a + s * .05)); head(p[0], p[1], q[0] - p[0], q[1] - p[1], c) });
+          if (fr) { const a = P(r, 0, 0), b = P(-r, 0, 0); sym(a[0], a[1], s > 0); sym(b[0], b[1], s < 0) }
+        });
+        ctx.globalAlpha = 1
+      }
+      // wavelength bracket on the floor
+      if (S.Lb && S.E && lamAt !== null && lamAt + lam < R) { const a = P(lamAt, FY, 0), b = P(lamAt + lam, FY, 0); ln(a, b, th.ink, 1.6); ln(P(lamAt, FY, -.15), P(lamAt, FY, .15), th.ink, 1.6); ln(P(lamAt + lam, FY, -.15), P(lamAt + lam, FY, .15), th.ink, 1.6); tag('λ = ' + fmt(lam) + ' م', (a[0] + b[0]) / 2, a[1] + 16, th.ink, 'ltr') }
+      // oscillator box + wires
+      ln(P(0, gap, 0), P(-1.8, gap, 0), th.mut, 2); ln(P(0, -gap, 0), P(-1.8, -gap, 0), th.mut, 2);
+      const bc = [[-4.4, .8], [-1.8, .8], [-1.8, -.8], [-4.4, -.8]].map(p => P(p[0], p[1], 0));
+      ctx.beginPath(); bc.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.closePath(); ctx.fillStyle = '#7cb342'; ctx.fill(); ctx.strokeStyle = '#33691e'; ctx.lineWidth = 2; ctx.stroke();
+      const ph = ((u % 2) + 2) % 2, sw = i => P(-4.1 + 2.0 * i / 40, -.38 - Math.sin(i / 40 * TAU) * .22, 0);
+      path(sw, 40, '#1b3a0c', 1.6); const dp = P(-4.1 + 2.0 * ph / 2, -.38 - Math.sin(ph * Math.PI) * .22, 0); ctx.beginPath(); ctx.arc(dp[0], dp[1], 3.5, 0, TAU); ctx.fillStyle = '#fff'; ctx.fill();
+      if (S.Lb) { const c = P(-3.1, .38, 0); ctx.font = '700 13px Tajawal,sans-serif'; ctx.direction = 'rtl'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#10240a'; ctx.fillText('مذبذب كهربائي', c[0], c[1]) }
+      // rods
+      [[1, Q], [-1, -Q]].forEach(([d, q]) => {
+        const a = P(0, d * gap, 0), b = P(0, d * (gap + Lr), 0), wp = .3 * a[3] * a[2];
+        ln(a, b, th.mut, wp + 3); ln(a, b, th.panel, wp); ctx.globalAlpha = .25 + .75 * Math.abs(q); ln(a, b, q >= 0 ? th.pos : th.neg, wp); ctx.globalAlpha = 1;
+        const n = Math.round(5 * Math.abs(q)); ctx.font = '700 15px Tajawal,sans-serif'; ctx.direction = 'ltr'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = th.ink;
+        for (let i = 0; i < n; i++) { const p = P(0, d * (gap + Lr - .12 - i * .24), 0); ctx.fillText(q >= 0 ? '+' : '−', p[0] - wp / 2 - 11, p[1]) }
+        if (S.V && Math.abs(I) > .12) { const ay = d * (gap + Lr / 2), len = Lr * .32 * Math.abs(I), dr = I > 0 ? 1 : -1, p1 = P(.4, ay - dr * len / 2, 0), p2 = P(.4, ay + dr * len / 2, 0); ln(p1, p2, th.ink, 2); head(p2[0], p2[1], p2[0] - p1[0], p2[1] - p1[1], th.ink) }
+      });
+      if (S.Lb) { const t = P(0, gap + Lr + .45, 0); tag('ساقان معدنيان', t[0], t[1], th.mut); if (S.E && lab) tag('خطوط المجال الكهربائي', lab[0], lab[1], th.E) }
+      tag('● حلقة خضراء ≙ ⊕ داخل الورقة', cw - 125, ch - 48, th.into); tag('● حلقة حمراء ≙ ⊙ خارج الورقة', cw - 125, ch - 20, th.out);
+      $('rq').textContent = Math.round(Q * 100) + '%';
+      $('ri').textContent = Math.abs(I) < .08 ? 'متوقفة' : (I > 0 ? 'نحو الأعلى' : 'نحو الأسفل');
+      const g = u - m0, s = ((m0 % 2) + 2) % 2 ? -1 : 1, pre = s < 0 ? 'انقلبت القطبية فصار المجال الكهربائي بعكس اتجاهه السابق والمغناطيسي ⊙. ' : '';
+      const t = pre + (g < .25 ? '1) تبدأ الشحنات بالحركة: الموجبة نحو أحد الساقين والسالبة نحو الآخر، فتنشأ خطوط مجال كهربائي بينهما (شكل 7).' : g < .5 ? '2) تصل الشحنات إلى طرفي الساقين فتبلغ emf أعظم قيمة وتكون سرعتها صفرًا وتتباعد خطوط المجال (شكل 8).' : g < .9 ? '3) تتناقص emf فتنعكس حركة الشحنات وتتقارب خطوط المجال وتتكوّن حلقات مغلقة (شكل 9).' : 'تنغلق الحلقة عند عودة الشحنات إلى نقطتي بدء حركتها وتنفصل عن الهوائي وتنتشر في الفضاء (شكل 10).');
+      if (t !== lastStage) { lastStage = t; $('hint').textContent = t }
+    }
+    function stat() {
+      const l = lamM();
+      $('rl').innerHTML = fmt(l) + ' <small>م</small>'; $('rf').innerHTML = S.f + ' <small>MHz</small>'; $('rt').innerHTML = fmt(1000 / S.f) + ' <small>ns</small>'; $('rv').innerHTML = '3.00×10⁸ <small>م/ث</small>';
+      $('fqo').textContent = S.f + ' MHz'; $('spo').textContent = '×' + S.spd;
+      $('eq').innerHTML = '<b>v = f × λ</b> &nbsp;⟶&nbsp; 3.00×10⁸ = ' + S.f + '×10⁶ × ' + fmt(l)
+    }
+    let last = 0;
+    function frame(t) {
+      const dt = Math.min((t - last) / 1000, .05); last = t;
+      if (!S.paused) { S.u += 3 * S.spd * dt / lamM(); if (S.u > 1000) S.u -= 1000 }
+      yaw += (tyaw - yaw) * .12; pitch += (tpitch - pitch) * .12; draw(); requestAnimationFrame(frame)
+    }
+    function pause(p) { S.paused = p; $('tP').setAttribute('aria-pressed', p); $('tP').textContent = p ? 'تشغيل' : 'إيقاف مؤقت' }
+    $('fq').oninput = e => { S.f = +e.target.value; stat() };
+    $('sp').oninput = e => { S.spd = +e.target.value; stat() };
+    $('stages').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.u = +b.dataset.g; pause(true) };
+    [['tE', 'E'], ['tB', 'B'], ['tV', 'V'], ['tL', 'Lb']].forEach(([id, k]) => $(id).onclick = e => { S[k] = !S[k]; e.target.setAttribute('aria-pressed', !!S[k]) });
+    $('tP').onclick = () => pause(!S.paused);
+    document.querySelectorAll('[data-v]').forEach(b => b.onclick = () => { [tyaw, tpitch] = b.dataset.v.split(',').map(Number) });
+    cv.onpointerdown = e => { cv.setPointerCapture(e.pointerId); drag = { x: e.clientX, y: e.clientY } };
+    cv.onpointermove = e => {
+      if (!drag) return; const dx = e.clientX - drag.x, dy = e.clientY - drag.y; drag.x = e.clientX; drag.y = e.clientY;
+      yaw = tyaw = tyaw - dx * .008; pitch = tpitch = cl(tpitch + dy * .006, -.2, 1.45)
+    };
+    cv.onpointerup = cv.onpointercancel = () => drag = null;
+    cv.onkeydown = e => { const m = { ArrowLeft: [.1, 0], ArrowRight: [-.1, 0], ArrowUp: [0, -.08], ArrowDown: [0, .08] }[e.key]; if (!m) return; e.preventDefault(); tyaw += m[0]; tpitch = cl(tpitch + m[1], -.2, 1.45) };
+    $('toolsGuideBtn').onclick = e => { const p = $('experimentGuide'), show = p.hidden; p.hidden = !show; e.target.textContent = show ? 'إخفاء الدليل' : 'إظهار الدليل'; e.target.setAttribute('aria-expanded', show ? 'true' : 'false'); if (show) p.scrollIntoView({ behavior: 'smooth', block: 'start' }) };
+    readTheme(); resize(); stat(); pause(S.paused);
+    requestAnimationFrame(frame);
+  </script>
+</body>
+
+</html>

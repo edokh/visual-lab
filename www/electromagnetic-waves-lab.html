@@ -1,198 +1,520 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
+
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>محاكاة خصائص الموجة الكهرومغناطيسية</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap">
-<style>
-:root{--bg:#0a0f1f;--panel:#121a33;--panel2:#18224a;--ink:#eaf0ff;--mut:#93a0c4;--line:#2a3664;--grid:rgba(120,150,230,.22);--shade:rgba(255,255,255,.10);--E:#ff9a3c;--B:#3cc8ff;--acc:#e04a9a;--acc2:#6a5cff;color-scheme:dark;
-box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0a0f1f}}
-@media (prefers-color-scheme:light){:root:not([data-theme="dark"]){--bg:#eef2fb;--panel:#fff;--panel2:#e6ecfa;--ink:#10162b;--mut:#4b587c;--line:#c5d0ee;--grid:rgba(40,70,150,.22);--shade:rgba(0,0,0,.10);--E:#e0690a;--B:#0a86c8;--acc:#c93a85;--acc2:#4b3de0;color-scheme:light}}
-:root[data-theme="dark"]{--bg:#0a0f1f;color-scheme:dark}
-*{box-sizing:border-box}
-html,body{margin:0;min-height:100%}
-body{background:var(--bg);color:var(--ink);font-family:Tajawal,"Segoe UI",Tahoma,sans-serif;line-height:1.5}
-header{padding:14px 18px 6px}
-h1{margin:0;font-size:1.35rem;font-weight:700}
-.eq{margin:4px 0 0;color:var(--mut);font-size:.95rem;min-height:1.5em}
-.eq b{color:var(--ink)}
-.wrap{direction:ltr;display:grid;grid-template-columns:320px 1fr;gap:12px;padding:10px 14px 18px}
-.wrap>*{direction:rtl}
-.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
-.side{display:flex;flex-direction:column;gap:12px}
-h2{margin:0 0 8px;font-size:1rem;font-weight:700}
-.reads{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0}
-.reads div{background:var(--panel2);border-radius:8px;padding:6px 10px}
-.reads dt{font-size:.78rem;color:var(--mut)}
-.reads dd{margin:0;font-size:1.1rem;font-weight:700;direction:ltr;text-align:right;font-variant-numeric:tabular-nums}
-.reads .e dd{color:var(--E)}.reads .b dd{color:var(--B)}
-.reads small{font-weight:400;color:var(--mut);font-size:.75rem}
-label{display:flex;justify-content:space-between;align-items:baseline;font-size:.9rem;margin-bottom:4px}
-output{font-weight:700;direction:ltr}
-input[type=range]{width:100%;accent-color:var(--acc);margin:0 0 10px}
-.row{display:flex;flex-wrap:wrap;gap:6px}
-button{font:inherit;font-size:.88rem;color:var(--ink);background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:6px 13px;cursor:pointer}
-button:hover{border-color:var(--acc2)}
-button[aria-pressed=true]{background:linear-gradient(90deg,var(--acc),var(--acc2));border-color:transparent;color:#fff}
-button:focus-visible,input:focus-visible,canvas:focus-visible{outline:2px solid var(--B);outline-offset:2px}
-.hint{margin:0;font-size:.88rem;color:var(--mut);border-right:3px solid var(--acc);padding-right:10px;min-height:3em}
-.main{display:flex;flex-direction:column;gap:10px;min-width:0}
-.stage{position:relative;flex:1;min-height:380px;background:radial-gradient(ellipse at 50% 40%,var(--panel2),var(--panel) 70%);border:1px solid var(--line);border-radius:12px;overflow:hidden}
-canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor:grab}
-canvas:active{cursor:grabbing}
-.tip{position:absolute;bottom:8px;right:12px;font-size:.78rem;color:var(--mut);pointer-events:none}
-.bar{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
-@media (max-width:860px){.wrap{grid-template-columns:1fr}.stage{min-height:340px}}
-</style>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>محاكاة خصائص الموجة الكهرومغناطيسية</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap">
+    <link rel="stylesheet" href="css/back-nav.css">
+    <style>
+        :root {
+            --bg: #0a0f1f;
+            --panel: #121a33;
+            --panel2: #18224a;
+            --ink: #eaf0ff;
+            --mut: #93a0c4;
+            --line: #2a3664;
+            --grid: rgba(120, 150, 230, .22);
+            --shade: rgba(255, 255, 255, .10);
+            --E: #ff9a3c;
+            --B: #3cc8ff;
+            --acc: #e04a9a;
+            --acc2: #6a5cff;
+            color-scheme: dark;
+            box-sizing: border-box;
+            padding-top: env(safe-area-inset-top, 0px);
+            padding-bottom: env(safe-area-inset-bottom, 0px)
+        }
+
+        @media (prefers-color-scheme:dark) {
+            :root:not([data-theme="light"]) {
+                --bg: #0a0f1f
+            }
+        }
+
+        @media (prefers-color-scheme:light) {
+            :root:not([data-theme="dark"]) {
+                --bg: #eef2fb;
+                --panel: #fff;
+                --panel2: #e6ecfa;
+                --ink: #10162b;
+                --mut: #4b587c;
+                --line: #c5d0ee;
+                --grid: rgba(40, 70, 150, .22);
+                --shade: rgba(0, 0, 0, .10);
+                --E: #e0690a;
+                --B: #0a86c8;
+                --acc: #c93a85;
+                --acc2: #4b3de0;
+                color-scheme: light
+            }
+        }
+
+        :root[data-theme="dark"] {
+            --bg: #0a0f1f;
+            color-scheme: dark
+        }
+
+        * {
+            box-sizing: border-box
+        }
+
+        html,
+        body {
+            margin: 0;
+            min-height: 100%
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--ink);
+            font-family: Tajawal, "Segoe UI", Tahoma, sans-serif;
+            line-height: 1.5
+        }
+
+        header {
+            padding: 14px 18px 6px
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 1.35rem;
+            font-weight: 700
+        }
+
+        .eq {
+            margin: 4px 0 0;
+            color: var(--mut);
+            font-size: .95rem;
+            min-height: 1.5em
+        }
+
+        .eq b {
+            color: var(--ink)
+        }
+
+        .wrap {
+            direction: ltr;
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 12px;
+            padding: 10px 14px 18px
+        }
+
+        .wrap>* {
+            direction: rtl
+        }
+
+        .panel {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 12px 14px
+        }
+
+        .side {
+            display: flex;
+            flex-direction: column;
+            gap: 12px
+        }
+
+        h2 {
+            margin: 0 0 8px;
+            font-size: 1rem;
+            font-weight: 700
+        }
+
+        .reads {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin: 0
+        }
+
+        .reads div {
+            background: var(--panel2);
+            border-radius: 8px;
+            padding: 6px 10px
+        }
+
+        .reads dt {
+            font-size: .78rem;
+            color: var(--mut)
+        }
+
+        .reads dd {
+            margin: 0;
+            font-size: 1.1rem;
+            font-weight: 700;
+            direction: ltr;
+            text-align: right;
+            font-variant-numeric: tabular-nums
+        }
+
+        .reads .e dd {
+            color: var(--E)
+        }
+
+        .reads .b dd {
+            color: var(--B)
+        }
+
+        .reads small {
+            font-weight: 400;
+            color: var(--mut);
+            font-size: .75rem
+        }
+
+        label {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            font-size: .9rem;
+            margin-bottom: 4px
+        }
+
+        output {
+            font-weight: 700;
+            direction: ltr
+        }
+
+        input[type=range] {
+            width: 100%;
+            accent-color: var(--acc);
+            margin: 0 0 10px
+        }
+
+        .row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px
+        }
+
+        button {
+            font: inherit;
+            font-size: .88rem;
+            color: var(--ink);
+            background: var(--panel2);
+            border: 1px solid var(--line);
+            border-radius: 999px;
+            padding: 6px 13px;
+            cursor: pointer
+        }
+
+        button:hover {
+            border-color: var(--acc2)
+        }
+
+        button[aria-pressed=true] {
+            background: linear-gradient(90deg, var(--acc), var(--acc2));
+            border-color: transparent;
+            color: #fff
+        }
+
+        button:focus-visible,
+        input:focus-visible,
+        canvas:focus-visible {
+            outline: 2px solid var(--B);
+            outline-offset: 2px
+        }
+
+        .hint {
+            margin: 0;
+            font-size: .88rem;
+            color: var(--mut);
+            border-right: 3px solid var(--acc);
+            padding-right: 10px;
+            min-height: 3em
+        }
+
+        .main {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            min-width: 0
+        }
+
+        .stage {
+            position: relative;
+            flex: 1;
+            min-height: 380px;
+            background: radial-gradient(ellipse at 50% 40%, var(--panel2), var(--panel) 70%);
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            overflow: hidden
+        }
+
+        canvas {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            touch-action: none;
+            cursor: grab
+        }
+
+        canvas:active {
+            cursor: grabbing
+        }
+
+        .tip {
+            position: absolute;
+            bottom: 8px;
+            right: 12px;
+            font-size: .78rem;
+            color: var(--mut);
+            pointer-events: none
+        }
+
+        .bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            justify-content: center
+        }
+
+        @media (max-width:860px) {
+            .wrap {
+                grid-template-columns: 1fr
+            }
+
+            .stage {
+                min-height: 340px
+            }
+        }
+    </style>
 </head>
+
 <body>
-<header>
-<h1>خصائص الموجة الكهرومغناطيسية</h1>
-<p class="eq" id="eq" aria-live="polite"></p>
-</header>
-<div class="wrap">
-<aside class="side">
-<section class="panel" aria-label="القراءات">
-<h2>القراءات</h2>
-<dl class="reads">
-<div><dt>الطول الموجي λ</dt><dd id="rl"></dd></div>
-<div><dt>التردد f</dt><dd id="rf"></dd></div>
-<div><dt>الزمن الدوري T</dt><dd id="rt"></dd></div>
-<div><dt>سرعة الانتشار v</dt><dd id="rv"></dd></div>
-<div class="e"><dt>المجال الكهربائي عند النقطة</dt><dd><span id="re">0</span> <small>E/E₀</small></dd></div>
-<div class="b"><dt>المجال المغناطيسي عند النقطة</dt><dd><span id="rb">0</span> <small>B/B₀</small></dd></div>
-</dl>
-</section>
-<section class="panel" aria-label="التحكم">
-<label for="fq">التردد <output id="fqo">140 MHz</output></label>
-<input id="fq" type="range" min="30" max="500" step="1" value="140">
-<label for="xp">موضع نقطة القياس <output id="xpo">4.2 م</output></label>
-<input id="xp" type="range" min="0" max="10" step="0.05" value="4.2">
-<h2>الوسط</h2>
-<div class="row" id="media" role="group" aria-label="الوسط">
-<button data-n="1" aria-pressed="true">الفراغ</button>
-<button data-n="1.0003" aria-pressed="false">الهواء</button>
-<button data-n="1.33" aria-pressed="false">الماء</button>
-<button data-n="1.5" aria-pressed="false">الزجاج</button>
-</div>
-</section>
-<p class="hint" id="hint">حرّك شريط التردد وراقب الطول الموجي.</p>
-</aside>
-<div class="main">
-<div class="stage"><canvas id="cv" tabindex="0" aria-label="مشهد ثلاثي الأبعاد للموجة، اسحب لتدويره أو استخدم الأسهم"></canvas><span class="tip">اسحب للتدوير، واسحب الكرة البيضاء لتحريك نقطة القياس</span></div>
-<div class="bar">
-<button id="tE" aria-pressed="true">المجال الكهربائي E</button>
-<button id="tB" aria-pressed="true">المجال المغناطيسي B</button>
-<button id="tV" aria-pressed="true">المتجهات</button>
-<button id="tL" aria-pressed="true">التسميات</button>
-<button id="tP" aria-pressed="false">إيقاف مؤقت</button>
-<button data-v="0.5,0.32">زاوية افتراضية</button>
-<button data-v="1.571,0.05">على امتداد المحور</button>
-<button data-v="0,1.35">من الأعلى</button>
-</div>
-</div>
-</div>
-<script>
-const C=3e8,L=10,A=1.5,FY=-1.9,TAU=Math.PI*2;
-const S={f:140,n:1,xp:4.2,T:0,E:1,B:1,V:1,Lb:1,paused:matchMedia('(prefers-reduced-motion:reduce)').matches};
-let yaw=.5,pitch=.32,tyaw=.5,tpitch=.32,drag=null,th={};
-const $=id=>document.getElementById(id);
-const cv=$('cv'),ctx=cv.getContext('2d');let cw=0,ch=0,dpr=1;
-const lam=()=>C/S.n/(S.f*1e6);
-const fmt=(v,d=2)=>v.toFixed(d);
-function readTheme(){const s=getComputedStyle(document.documentElement);['panel','ink','mut','grid','shade','E','B','line'].forEach(k=>th[k]=s.getPropertyValue('--'+k).trim())}
-function resize(){const r=cv.getBoundingClientRect();dpr=Math.min(devicePixelRatio||1,2);cw=r.width;ch=r.height;cv.width=cw*dpr;cv.height=ch*dpr;ctx.setTransform(dpr,0,0,dpr,0,0)}
-new ResizeObserver(resize).observe(cv);
-matchMedia('(prefers-color-scheme:dark)').addEventListener('change',readTheme);
+    <a class="vl-back" href="chapter-2.html" aria-label="العودة">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+            class="back_icon">
+            <path stroke-linecap="round" stroke-width="2.5" stroke-linejoin="round"
+                d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" />
+        </svg>
+    </a>
+    <header>
+        <h1>خصائص الموجة الكهرومغناطيسية</h1>
+        <p class="eq" id="eq" aria-live="polite"></p>
+    </header>
+    <div class="wrap">
+        <aside class="side">
+            <section class="panel" aria-label="القراءات">
+                <h2>القراءات</h2>
+                <dl class="reads">
+                    <div>
+                        <dt>الطول الموجي λ</dt>
+                        <dd id="rl"></dd>
+                    </div>
+                    <div>
+                        <dt>التردد f</dt>
+                        <dd id="rf"></dd>
+                    </div>
+                    <div>
+                        <dt>الزمن الدوري T</dt>
+                        <dd id="rt"></dd>
+                    </div>
+                    <div>
+                        <dt>سرعة الانتشار v</dt>
+                        <dd id="rv"></dd>
+                    </div>
+                    <div class="e">
+                        <dt>المجال الكهربائي عند النقطة</dt>
+                        <dd><span id="re">0</span> <small>E/E₀</small></dd>
+                    </div>
+                    <div class="b">
+                        <dt>المجال المغناطيسي عند النقطة</dt>
+                        <dd><span id="rb">0</span> <small>B/B₀</small></dd>
+                    </div>
+                </dl>
+            </section>
+            <section class="panel" aria-label="التحكم">
+                <label for="fq">التردد <output id="fqo">140 MHz</output></label>
+                <input id="fq" type="range" min="30" max="500" step="1" value="140">
+                <label for="xp">موضع نقطة القياس <output id="xpo">4.2 م</output></label>
+                <input id="xp" type="range" min="0" max="10" step="0.05" value="4.2">
+                <h2>الوسط</h2>
+                <div class="row" id="media" role="group" aria-label="الوسط">
+                    <button data-n="1" aria-pressed="true">الفراغ</button>
+                    <button data-n="1.0003" aria-pressed="false">الهواء</button>
+                    <button data-n="1.33" aria-pressed="false">الماء</button>
+                    <button data-n="1.5" aria-pressed="false">الزجاج</button>
+                </div>
+            </section>
+            <p class="hint" id="hint">حرّك شريط التردد وراقب الطول الموجي.</p>
+        </aside>
+        <div class="main">
+            <div class="stage"><canvas id="cv" tabindex="0"
+                    aria-label="مشهد ثلاثي الأبعاد للموجة، اسحب لتدويره أو استخدم الأسهم"></canvas><span
+                    class="tip">اسحب للتدوير، واسحب الكرة البيضاء لتحريك نقطة القياس</span></div>
+            <div class="bar">
+                <button id="tE" aria-pressed="true">المجال الكهربائي E</button>
+                <button id="tB" aria-pressed="true">المجال المغناطيسي B</button>
+                <button id="tV" aria-pressed="true">المتجهات</button>
+                <button id="tL" aria-pressed="true">التسميات</button>
+                <button id="tP" aria-pressed="false">إيقاف مؤقت</button>
+                <button data-v="0.5,0.32">زاوية افتراضية</button>
+                <button data-v="1.571,0.05">على امتداد المحور</button>
+                <button data-v="0,1.35">من الأعلى</button>
+                <button id="toolsGuideBtn" type="button" aria-expanded="false" aria-controls="experimentGuide">إظهار
+                    الدليل</button>
+            </div>
+        </div>
 
-function P(x,y,z){
- const X=(x-L/2)*.85,cy=Math.cos(yaw),sy=Math.sin(yaw),cp=Math.cos(pitch),sp=Math.sin(pitch);
- const x1=X*cy+z*sy,z1=-X*sy+z*cy;
- const y2=y*cp+z1*sp,z2=-y*sp+z1*cp;
- const s=16/(16+z2),k=Math.min(cw/10,ch/6.4);
- return[cw/2+x1*s*k,ch/2-y2*s*k+ch*.04,s];
-}
-const fld=x=>Math.cos(TAU*(x-S.T*1.5/S.n)/lam());
-function line(a,b,col,w,dash){ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.strokeStyle=col;ctx.lineWidth=w;ctx.setLineDash(dash||[]);ctx.stroke();ctx.setLineDash([])}
-function arrow(a,b,col,w){line(a,b,col,w);const an=Math.atan2(b[1]-a[1],b[0]-a[0]),h=9;ctx.beginPath();ctx.moveTo(b[0],b[1]);ctx.lineTo(b[0]-h*Math.cos(an-.4),b[1]-h*Math.sin(an-.4));ctx.lineTo(b[0]-h*Math.cos(an+.4),b[1]-h*Math.sin(an+.4));ctx.closePath();ctx.fillStyle=col;ctx.fill()}
-function curve(fn,col,w){ctx.beginPath();for(let i=0;i<=420;i++){const x=L*i/420,p=fn(x);i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1])}ctx.strokeStyle=col;ctx.lineWidth=w;ctx.lineJoin='round';ctx.stroke()}
-function tag(txt,p,col,dir){ctx.font='700 13px Tajawal,sans-serif';ctx.direction=dir||'rtl';ctx.textAlign='center';ctx.textBaseline='middle';
- const w=ctx.measureText(txt).width+16,x=p[0]-w/2,y=p[1]-12;ctx.fillStyle=th.panel;ctx.globalAlpha=.88;ctx.beginPath();ctx.roundRect(x,y,w,24,12);ctx.fill();ctx.globalAlpha=1;ctx.strokeStyle=col;ctx.lineWidth=1.2;ctx.stroke();ctx.fillStyle=th.ink;ctx.fillText(txt,p[0],p[1])}
+    </div>
+    <section class="experiment-guide" id="experimentGuide" hidden>
+        <h2>دليل التجربة</h2>
+        <h3>الأدوات</h3>
+        <ul>
+            <li>شريط التردد لتغيير تردد الموجة.</li>
+            <li>شريط موضع نقطة القياس لتحريك المؤشر على المحور.</li>
+            <li>أزرار الوسط لاختيار الفراغ أو الهواء أو الماء أو الزجاج.</li>
+            <li>أزرار العرض للتحكم في إظهار المجالات والمتجهات والتسميات وإيقاف الحركة.</li>
+        </ul>
+        <h3>طريقة الاستخدام</h3>
+        <ul>
+            <li>غيّر التردد ولاحظ تغير الطول الموجي مع ثبات سرعة الانتشار في الوسط نفسه.</li>
+            <li>اختر وسطًا مختلفًا ولاحظ أثر معامل الانكسار في سرعة الانتشار والطول الموجي.</li>
+            <li>حرّك نقطة القياس أو اسحب الكرة البيضاء لمتابعة قيمتي المجالين الكهربائي والمغناطيسي.</li>
+            <li>اسحب المشهد لتدويره، أو استخدم أزرار زوايا العرض لتغيير المنظور.</li>
+        </ul>
+        <h3>المحصلة والغرض</h3>
+        <ul>
+            <li>توضح المحاكاة العلاقة بين سرعة الانتشار والتردد والطول الموجي: v = f × λ.</li>
+            <li>يتغير المجالان الكهربائي والمغناطيسي معًا، بينما تتغير سرعة الموجة وطولها الموجي بتغير الوسط.</li>
+        </ul>
+    </section>
+    <script>
+        const C = 3e8, L = 10, A = 1.5, FY = -1.9, TAU = Math.PI * 2;
+        const S = { f: 140, n: 1, xp: 4.2, T: 0, E: 1, B: 1, V: 1, Lb: 1, paused: matchMedia('(prefers-reduced-motion:reduce)').matches };
+        let yaw = .5, pitch = .32, tyaw = .5, tpitch = .32, drag = null, th = {};
+        const $ = id => document.getElementById(id);
+        const cv = $('cv'), ctx = cv.getContext('2d'); let cw = 0, ch = 0, dpr = 1;
+        const lam = () => C / S.n / (S.f * 1e6);
+        const fmt = (v, d = 2) => v.toFixed(d);
+        function readTheme() { const s = getComputedStyle(document.documentElement);['panel', 'ink', 'mut', 'grid', 'shade', 'E', 'B', 'line'].forEach(k => th[k] = s.getPropertyValue('--' + k).trim()) }
+        function resize() { const r = cv.getBoundingClientRect(); dpr = Math.min(devicePixelRatio || 1, 2); cw = r.width; ch = r.height; cv.width = cw * dpr; cv.height = ch * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0) }
+        new ResizeObserver(resize).observe(cv);
+        matchMedia('(prefers-color-scheme:dark)').addEventListener('change', readTheme);
 
-function draw(){
- ctx.clearRect(0,0,cw,ch);
- for(let x=0;x<=L;x++)line(P(x,FY,-3.2),P(x,FY,3.2),th.grid,1);
- for(let z=-3;z<=3;z++)line(P(0,FY,z),P(L,FY,z),th.grid,1);
- if(S.E)curve(x=>P(x,FY,A*fld(x)),th.shade,2);
- line(P(0,0,0),P(L,0,0),th.ink,2.2);
- const ax=P(L,0,0);ctx.beginPath();ctx.arc(ax[0],ax[1],4,0,TAU);ctx.fillStyle=th.ink;ctx.fill();
- if(S.V){const N=100;ctx.globalAlpha=.55;
-  for(let i=0;i<=N;i++){const x=L*i/N,v=A*fld(x);
-   if(S.B)line(P(x,0,0),P(x,0,v),th.B,1.2);
-   if(S.E)line(P(x,0,0),P(x,v,0),th.E,1.2)}
-  ctx.globalAlpha=1}
- if(S.B)curve(x=>P(x,0,A*fld(x)),th.B,2.6);
- if(S.E)curve(x=>P(x,A*fld(x),0),th.E,2.6);
- // wavelength bracket between two crests of E
- const l=lam(),v=S.T*1.5/S.n;let xc=((v%l)+l)%l;while(xc<.4)xc+=l;
- if(S.E&&xc+l<=L-.1){const y=A*1.28;
-  line(P(xc,A,0),P(xc,y,0),th.mut,1,[3,3]);line(P(xc+l,A,0),P(xc+l,y,0),th.mut,1,[3,3]);
-  line(P(xc,y,0),P(xc+l,y,0),th.ink,1.6);
-  if(S.Lb)tag('λ = '+fmt(l)+' م',P(xc+l/2,y+.25,0),th.ink,'ltr')}
- // probe
- const e=fld(S.xp),o=P(S.xp,0,0);
- if(S.B)arrow(o,P(S.xp,0,A*e),th.B,3.4);
- if(S.E)arrow(o,P(S.xp,A*e,0),th.E,3.4);
- ctx.beginPath();ctx.arc(o[0],o[1],7,0,TAU);ctx.fillStyle='#fff';ctx.fill();ctx.strokeStyle='#e04a9a';ctx.lineWidth=2.5;ctx.stroke();
- if(S.Lb){
-  if(S.E)tag('المجال الكهربائي E',P(1.1,A*1.05,0),th.E);
-  if(S.B)tag('المجال المغناطيسي B',P(L-1.1,0,A*1.05),th.B);
-  tag('اتجاه الانتشار',P(L+.2,-.35,0),th.ink);
-  tag('نقطة القياس',[o[0],o[1]+24],th.mut)}
- $('re').textContent=fmt(e);$('rb').textContent=fmt(e);
-}
-function static_(){
- const l=lam(),v=C/S.n;
- $('rl').innerHTML=fmt(l)+' <small>م</small>';
- $('rf').innerHTML=S.f+' <small>MHz</small>';
- $('rt').innerHTML=fmt(1000/S.f)+' <small>ns</small>';
- $('rv').innerHTML=fmt(v/1e8)+'×10⁸ <small>م/ث</small>';
- $('fqo').textContent=S.f+' MHz';$('xpo').textContent=fmt(S.xp,1)+' م';
- $('eq').innerHTML='<b>v = f × λ</b> &nbsp;⟶&nbsp; '+fmt(v/1e8)+'×10⁸ = '+S.f+'×10⁶ × '+fmt(l)+' &nbsp;|&nbsp; <b>n = '+S.n+'</b>';
-}
-function hint(t){$('hint').textContent=t}
-let last=0;
-function frame(t){const dt=Math.min((t-last)/1000,.05);last=t;
- if(!S.paused)S.T=(S.T+dt)%1000;
- yaw+=(tyaw-yaw)*.12;pitch+=(tpitch-pitch)*.12;
- draw();requestAnimationFrame(frame)}
+        function P(x, y, z) {
+            const X = (x - L / 2) * .85, cy = Math.cos(yaw), sy = Math.sin(yaw), cp = Math.cos(pitch), sp = Math.sin(pitch);
+            const x1 = X * cy + z * sy, z1 = -X * sy + z * cy;
+            const y2 = y * cp + z1 * sp, z2 = -y * sp + z1 * cp;
+            const s = 16 / (16 + z2), k = Math.min(cw / 10, ch / 6.4);
+            return [cw / 2 + x1 * s * k, ch / 2 - y2 * s * k + ch * .04, s];
+        }
+        const fld = x => Math.cos(TAU * (x - S.T * 1.5 / S.n) / lam());
+        function line(a, b, col, w, dash) { ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.strokeStyle = col; ctx.lineWidth = w; ctx.setLineDash(dash || []); ctx.stroke(); ctx.setLineDash([]) }
+        function arrow(a, b, col, w) { line(a, b, col, w); const an = Math.atan2(b[1] - a[1], b[0] - a[0]), h = 9; ctx.beginPath(); ctx.moveTo(b[0], b[1]); ctx.lineTo(b[0] - h * Math.cos(an - .4), b[1] - h * Math.sin(an - .4)); ctx.lineTo(b[0] - h * Math.cos(an + .4), b[1] - h * Math.sin(an + .4)); ctx.closePath(); ctx.fillStyle = col; ctx.fill() }
+        function curve(fn, col, w) { ctx.beginPath(); for (let i = 0; i <= 420; i++) { const x = L * i / 420, p = fn(x); i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]) } ctx.strokeStyle = col; ctx.lineWidth = w; ctx.lineJoin = 'round'; ctx.stroke() }
+        function tag(txt, p, col, dir) {
+            ctx.font = '700 13px Tajawal,sans-serif'; ctx.direction = dir || 'rtl'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            const w = ctx.measureText(txt).width + 16, x = p[0] - w / 2, y = p[1] - 12; ctx.fillStyle = th.panel; ctx.globalAlpha = .88; ctx.beginPath(); ctx.roundRect(x, y, w, 24, 12); ctx.fill(); ctx.globalAlpha = 1; ctx.strokeStyle = col; ctx.lineWidth = 1.2; ctx.stroke(); ctx.fillStyle = th.ink; ctx.fillText(txt, p[0], p[1])
+        }
 
-$('fq').oninput=e=>{const o=S.f;S.f=+e.target.value;static_();
- hint(S.f>o?'زيادة التردد قصّرت الطول الموجي، لأن السرعة ثابتة في الوسط نفسه (v = f × λ).':'نقصان التردد زاد الطول الموجي، لأن السرعة ثابتة في الوسط نفسه (v = f × λ).')};
-$('xp').oninput=e=>{S.xp=+e.target.value;static_()};
-$('media').onclick=e=>{const b=e.target.closest('button');if(!b)return;
- [...$('media').children].forEach(x=>x.setAttribute('aria-pressed',x===b));S.n=+b.dataset.n;static_();
- hint('تغيّر الوسط غيّر السرعة (v = c / n) فتغيّر الطول الموجي، أما التردد فبقي ثابتًا لأنه يتحدد بالمصدر.')};
-[['tE','E'],['tB','B'],['tV','V'],['tL','Lb']].forEach(([id,k])=>$(id).onclick=e=>{S[k]=!S[k];e.target.setAttribute('aria-pressed',!!S[k])});
-$('tP').onclick=e=>{S.paused=!S.paused;e.target.setAttribute('aria-pressed',S.paused);e.target.textContent=S.paused?'تشغيل':'إيقاف مؤقت'};
-document.querySelectorAll('[data-v]').forEach(b=>b.onclick=()=>{[tyaw,tpitch]=b.dataset.v.split(',').map(Number)});
+        function draw() {
+            ctx.clearRect(0, 0, cw, ch);
+            for (let x = 0; x <= L; x++)line(P(x, FY, -3.2), P(x, FY, 3.2), th.grid, 1);
+            for (let z = -3; z <= 3; z++)line(P(0, FY, z), P(L, FY, z), th.grid, 1);
+            if (S.E) curve(x => P(x, FY, A * fld(x)), th.shade, 2);
+            line(P(0, 0, 0), P(L, 0, 0), th.ink, 2.2);
+            const ax = P(L, 0, 0); ctx.beginPath(); ctx.arc(ax[0], ax[1], 4, 0, TAU); ctx.fillStyle = th.ink; ctx.fill();
+            if (S.V) {
+                const N = 100; ctx.globalAlpha = .55;
+                for (let i = 0; i <= N; i++) {
+                    const x = L * i / N, v = A * fld(x);
+                    if (S.B) line(P(x, 0, 0), P(x, 0, v), th.B, 1.2);
+                    if (S.E) line(P(x, 0, 0), P(x, v, 0), th.E, 1.2)
+                }
+                ctx.globalAlpha = 1
+            }
+            if (S.B) curve(x => P(x, 0, A * fld(x)), th.B, 2.6);
+            if (S.E) curve(x => P(x, A * fld(x), 0), th.E, 2.6);
+            // wavelength bracket between two crests of E
+            const l = lam(), v = S.T * 1.5 / S.n; let xc = ((v % l) + l) % l; while (xc < .4) xc += l;
+            if (S.E && xc + l <= L - .1) {
+                const y = A * 1.28;
+                line(P(xc, A, 0), P(xc, y, 0), th.mut, 1, [3, 3]); line(P(xc + l, A, 0), P(xc + l, y, 0), th.mut, 1, [3, 3]);
+                line(P(xc, y, 0), P(xc + l, y, 0), th.ink, 1.6);
+                if (S.Lb) tag('λ = ' + fmt(l) + ' م', P(xc + l / 2, y + .25, 0), th.ink, 'ltr')
+            }
+            // probe
+            const e = fld(S.xp), o = P(S.xp, 0, 0);
+            if (S.B) arrow(o, P(S.xp, 0, A * e), th.B, 3.4);
+            if (S.E) arrow(o, P(S.xp, A * e, 0), th.E, 3.4);
+            ctx.beginPath(); ctx.arc(o[0], o[1], 7, 0, TAU); ctx.fillStyle = '#fff'; ctx.fill(); ctx.strokeStyle = '#e04a9a'; ctx.lineWidth = 2.5; ctx.stroke();
+            if (S.Lb) {
+                if (S.E) tag('المجال الكهربائي E', P(1.1, A * 1.05, 0), th.E);
+                if (S.B) tag('المجال المغناطيسي B', P(L - 1.1, 0, A * 1.05), th.B);
+                tag('اتجاه الانتشار', P(L + .2, -.35, 0), th.ink);
+                tag('نقطة القياس', [o[0], o[1] + 24], th.mut)
+            }
+            $('re').textContent = fmt(e); $('rb').textContent = fmt(e);
+        }
+        function static_() {
+            const l = lam(), v = C / S.n;
+            $('rl').innerHTML = fmt(l) + ' <small>م</small>';
+            $('rf').innerHTML = S.f + ' <small>MHz</small>';
+            $('rt').innerHTML = fmt(1000 / S.f) + ' <small>ns</small>';
+            $('rv').innerHTML = fmt(v / 1e8) + '×10⁸ <small>م/ث</small>';
+            $('fqo').textContent = S.f + ' MHz'; $('xpo').textContent = fmt(S.xp, 1) + ' م';
+            $('eq').innerHTML = '<b>v = f × λ</b> &nbsp;⟶&nbsp; ' + fmt(v / 1e8) + '×10⁸ = ' + S.f + '×10⁶ × ' + fmt(l) + ' &nbsp;|&nbsp; <b>n = ' + S.n + '</b>';
+        }
+        function hint(t) { $('hint').textContent = t }
+        let last = 0;
+        function frame(t) {
+            const dt = Math.min((t - last) / 1000, .05); last = t;
+            if (!S.paused) S.T = (S.T + dt) % 1000;
+            yaw += (tyaw - yaw) * .12; pitch += (tpitch - pitch) * .12;
+            draw(); requestAnimationFrame(frame)
+        }
 
-cv.onpointerdown=e=>{cv.setPointerCapture(e.pointerId);const r=cv.getBoundingClientRect(),px=e.clientX-r.left,py=e.clientY-r.top,o=P(S.xp,0,0);
- drag=Math.hypot(px-o[0],py-o[1])<20?'probe':'view';drag!=='probe'&&(drag={x:e.clientX,y:e.clientY});if(drag==='probe')drag='probe'};
-cv.onpointermove=e=>{if(!drag)return;
- if(drag==='probe'){const r=cv.getBoundingClientRect(),px=e.clientX-r.left,py=e.clientY-r.top;let bx=0,bd=1e9;
-  for(let x=0;x<=L;x+=.05){const p=P(x,0,0),d=Math.hypot(p[0]-px,p[1]-py);if(d<bd){bd=d;bx=x}}
-  S.xp=Math.round(bx*20)/20;$('xp').value=S.xp;static_();return}
- const dx=e.clientX-drag.x,dy=e.clientY-drag.y;drag.x=e.clientX;drag.y=e.clientY;
- yaw=tyaw=tyaw-dx*.008;pitch=tpitch=Math.max(-.2,Math.min(1.45,tpitch+dy*.006))};
-cv.onpointerup=cv.onpointercancel=()=>drag=null;
-cv.onkeydown=e=>{const m={ArrowLeft:[.1,0],ArrowRight:[-.1,0],ArrowUp:[0,-.08],ArrowDown:[0,.08]}[e.key];if(!m)return;e.preventDefault();tyaw+=m[0];tpitch=Math.max(-.2,Math.min(1.45,tpitch+m[1]))};
+        $('fq').oninput = e => {
+            const o = S.f; S.f = +e.target.value; static_();
+            hint(S.f > o ? 'زيادة التردد قصّرت الطول الموجي، لأن السرعة ثابتة في الوسط نفسه (v = f × λ).' : 'نقصان التردد زاد الطول الموجي، لأن السرعة ثابتة في الوسط نفسه (v = f × λ).')
+        };
+        $('xp').oninput = e => { S.xp = +e.target.value; static_() };
+        $('media').onclick = e => {
+            const b = e.target.closest('button'); if (!b) return;
+            [...$('media').children].forEach(x => x.setAttribute('aria-pressed', x === b)); S.n = +b.dataset.n; static_();
+            hint('تغيّر الوسط غيّر السرعة (v = c / n) فتغيّر الطول الموجي، أما التردد فبقي ثابتًا لأنه يتحدد بالمصدر.')
+        };
+        [['tE', 'E'], ['tB', 'B'], ['tV', 'V'], ['tL', 'Lb']].forEach(([id, k]) => $(id).onclick = e => { S[k] = !S[k]; e.target.setAttribute('aria-pressed', !!S[k]) });
+        $('tP').onclick = e => { S.paused = !S.paused; e.target.setAttribute('aria-pressed', S.paused); e.target.textContent = S.paused ? 'تشغيل' : 'إيقاف مؤقت' };
+        document.querySelectorAll('[data-v]').forEach(b => b.onclick = () => { [tyaw, tpitch] = b.dataset.v.split(',').map(Number) });
 
-readTheme();resize();static_();
-if(S.paused){$('tP').setAttribute('aria-pressed',true);$('tP').textContent='تشغيل'}
-requestAnimationFrame(frame);
-</script>
+        cv.onpointerdown = e => {
+            cv.setPointerCapture(e.pointerId); const r = cv.getBoundingClientRect(), px = e.clientX - r.left, py = e.clientY - r.top, o = P(S.xp, 0, 0);
+            drag = Math.hypot(px - o[0], py - o[1]) < 20 ? 'probe' : 'view'; drag !== 'probe' && (drag = { x: e.clientX, y: e.clientY }); if (drag === 'probe') drag = 'probe'
+        };
+        cv.onpointermove = e => {
+            if (!drag) return;
+            if (drag === 'probe') {
+                const r = cv.getBoundingClientRect(), px = e.clientX - r.left, py = e.clientY - r.top; let bx = 0, bd = 1e9;
+                for (let x = 0; x <= L; x += .05) { const p = P(x, 0, 0), d = Math.hypot(p[0] - px, p[1] - py); if (d < bd) { bd = d; bx = x } }
+                S.xp = Math.round(bx * 20) / 20; $('xp').value = S.xp; static_(); return
+            }
+            const dx = e.clientX - drag.x, dy = e.clientY - drag.y; drag.x = e.clientX; drag.y = e.clientY;
+            yaw = tyaw = tyaw - dx * .008; pitch = tpitch = Math.max(-.2, Math.min(1.45, tpitch + dy * .006))
+        };
+        cv.onpointerup = cv.onpointercancel = () => drag = null;
+        cv.onkeydown = e => { const m = { ArrowLeft: [.1, 0], ArrowRight: [-.1, 0], ArrowUp: [0, -.08], ArrowDown: [0, .08] }[e.key]; if (!m) return; e.preventDefault(); tyaw += m[0]; tpitch = Math.max(-.2, Math.min(1.45, tpitch + m[1])) };
+
+        $('toolsGuideBtn').onclick = e => {
+            const panel = $('experimentGuide'), willShow = panel.hidden;
+            panel.hidden = !willShow; e.target.textContent = willShow ? 'إخفاء الدليل' : 'إظهار الدليل';
+            e.target.setAttribute('aria-expanded', willShow ? 'true' : 'false');
+            // Scroll to the experimentGuide if it is being shown
+            if (willShow) {
+                panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        };
+        readTheme(); resize(); static_();
+        if (S.paused) { $('tP').setAttribute('aria-pressed', true); $('tP').textContent = 'تشغيل' }
+        requestAnimationFrame(frame);
+    </script>
 </body>
+
 </html>
