@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>محاكاة دائرتي الإرسال والتسلم</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap">
+  <link rel="stylesheet" href="css/back-nav.css">
+  <style>
+    :root {
+      --bg: #0a0f1f;
+      --panel: #121a33;
+      --panel2: #18224a;
+      --ink: #eaf0ff;
+      --mut: #93a0c4;
+      --line: #2a3664;
+      --E: #ff9a3c;
+      --B: #3cc8ff;
+      --pos: #e5484d;
+      --neg: #4f6cf0;
+      --acc: #e04a9a;
+      --acc2: #6a5cff;
+      --ok: #3ddc84;
+      color-scheme: dark;
+      box-sizing: border-box;
+      padding-top: env(safe-area-inset-top, 0px);
+      padding-bottom: env(safe-area-inset-bottom, 0px)
+    }
+
+    @media (prefers-color-scheme:light) {
+      :root:not([data-theme="dark"]) {
+        --bg: #eef2fb;
+        --panel: #fff;
+        --panel2: #e6ecfa;
+        --ink: #10162b;
+        --mut: #4b587c;
+        --line: #c5d0ee;
+        --E: #e0690a;
+        --B: #0a86c8;
+        --pos: #d63a3f;
+        --neg: #3550d8;
+        --acc: #c93a85;
+        --acc2: #4b3de0;
+        --ok: #1f9d55;
+        color-scheme: light
+      }
+    }
+
+    :root[data-theme="dark"] {
+      --bg: #0a0f1f;
+      color-scheme: dark
+    }
+
+    * {
+      box-sizing: border-box
+    }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%
+    }
+
+    [hidden] {
+      display: none !important
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--ink);
+      font-family: Tajawal, "Segoe UI", Tahoma, sans-serif;
+      line-height: 1.5
+    }
+
+    header {
+      padding: 14px 18px 6px
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 1.35rem;
+      font-weight: 700
+    }
+
+    .eq {
+      margin: 4px 0 0;
+      color: var(--mut);
+      font-size: .95rem;
+      min-height: 1.5em
+    }
+
+    .eq b {
+      color: var(--ink)
+    }
+
+    .wrap {
+      direction: ltr;
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 12px;
+      padding: 10px 14px 18px
+    }
+
+    .wrap>* {
+      direction: rtl
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px 14px
+    }
+
+    .side {
+      display: flex;
+      flex-direction: column;
+      gap: 12px
+    }
+
+    h2 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+      font-weight: 700
+    }
+
+    .reads {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin: 0
+    }
+
+    .reads div {
+      background: var(--panel2);
+      border-radius: 8px;
+      padding: 6px 10px
+    }
+
+    .reads dt {
+      font-size: .78rem;
+      color: var(--mut)
+    }
+
+    .reads dd {
+      margin: 0;
+      font-size: 1.05rem;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums
+    }
+
+    .reads small {
+      font-weight: 400;
+      color: var(--mut);
+      font-size: .75rem
+    }
+
+    .meter {
+      height: 10px;
+      background: var(--panel2);
+      border-radius: 6px;
+      overflow: hidden;
+      margin: 10px 0 2px
+    }
+
+    .meter i {
+      display: block;
+      height: 100%;
+      width: 0;
+      background: linear-gradient(90deg, var(--acc), var(--ok));
+      transition: width .15s
+    }
+
+    label {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      font-size: .9rem;
+      margin-bottom: 4px
+    }
+
+    output {
+      font-weight: 700;
+      direction: ltr
+    }
+
+    input[type=range] {
+      width: 100%;
+      accent-color: var(--acc);
+      margin: 0 0 10px
+    }
+
+    button {
+      font: inherit;
+      font-size: .88rem;
+      color: var(--ink);
+      background: var(--panel2);
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 6px 13px;
+      cursor: pointer
+    }
+
+    button:hover {
+      border-color: var(--acc2)
+    }
+
+    button[aria-pressed=true] {
+      background: linear-gradient(90deg, var(--acc), var(--acc2));
+      border-color: transparent;
+      color: #fff
+    }
+
+    button:focus-visible,
+    input:focus-visible,
+    canvas:focus-visible {
+      outline: 2px solid var(--E);
+      outline-offset: 2px
+    }
+
+    .hint {
+      margin: 0;
+      font-size: .88rem;
+      color: var(--mut);
+      border-right: 3px solid var(--acc);
+      padding-right: 10px;
+      min-height: 4.5em
+    }
+
+    .main {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      min-width: 0
+    }
+
+    .stage {
+      position: relative;
+      flex: 1;
+      min-height: 440px;
+      background: radial-gradient(ellipse at 50% 45%, var(--panel2), var(--panel) 75%);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      overflow: hidden
+    }
+
+    canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      touch-action: none;
+      cursor: grab
+    }
+
+    canvas:active {
+      cursor: grabbing
+    }
+
+    .tip {
+      position: absolute;
+      top: 8px;
+      left: 12px;
+      font-size: .78rem;
+      color: var(--mut);
+      pointer-events: none
+    }
+
+    .bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      justify-content: center
+    }
+
+    .experiment-guide {
+      margin: 0 14px 18px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px 18px
+    }
+
+    .experiment-guide h2 {
+      font-size: 1.1rem
+    }
+
+    .experiment-guide h3 {
+      font-size: .95rem;
+      margin: 10px 0 4px;
+      color: var(--E)
+    }
+
+    .experiment-guide ul {
+      margin: 0;
+      padding-inline-start: 20px;
+      color: var(--mut);
+      font-size: .9rem
+    }
+
+    @media (max-width:860px) {
+      .wrap {
+        grid-template-columns: 1fr
+      }
+
+      .stage {
+        min-height: 380px
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <a class="vl-back" href="chapter-4.html" aria-label="العودة">
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+      class="back_icon">
+      <path stroke-linecap="round" stroke-width="2.5" stroke-linejoin="round"
+        d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" />
+    </svg>
+  </a>
+  <header>
+    <h1>دائرتا الإرسال والتسلم</h1>
+    <p class="eq" id="eq" aria-live="polite"></p>
+  </header>
+  <div class="wrap">
+    <aside class="side">
+      <section class="panel" aria-label="القراءات">
+        <h2>القراءات</h2>
+        <dl class="reads">
+          <div>
+            <dt>تردد المرسل f</dt>
+            <dd id="rt"></dd>
+          </div>
+          <div>
+            <dt>تردد دائرة الاستقبال f</dt>
+            <dd id="rr"></dd>
+          </div>
+          <div>
+            <dt>الطول الموجي λ</dt>
+            <dd id="rl"></dd>
+          </div>
+          <div>
+            <dt>شدة الاستقبال</dt>
+            <dd id="rh"></dd>
+          </div>
+        </dl>
+        <div class="meter" aria-hidden="true"><i id="mi"></i></div>
+      </section>
+      <section class="panel" aria-label="التحكم">
+        <label for="ct">سعة متسعة المرسل <output id="cto">100 pF</output></label>
+        <input id="ct" type="range" min="40" max="200" step="1" value="100">
+        <label for="cr">سعة متسعة المستقبل <output id="cro">160 pF</output></label>
+        <input id="cr" type="range" min="40" max="200" step="1" value="160">
+        <button id="tune">اضبط المستقبل على الرنين</button>
+      </section>
+      <p class="hint" id="hint"></p>
+    </aside>
+    <div class="main">
+      <div class="stage"><canvas id="cv" tabindex="0"
+          aria-label="مشهد ثلاثي الأبعاد لجهازي الإرسال والاستقبال، اسحب لتدويره أو استخدم الأسهم"></canvas><span
+          class="tip">اسحب لتدوير المشهد</span></div>
+      <div class="bar">
+        <button id="tOn" aria-pressed="true">المرسل يعمل</button>
+        <button id="tW" aria-pressed="true">الموجة</button>
+        <button id="tC" aria-pressed="true">الشحنات</button>
+        <button id="tF" aria-pressed="true">المجالات في الملفات</button>
+        <button id="tL" aria-pressed="true">التسميات</button>
+        <button id="tS" aria-pressed="false">الصوت</button>
+        <button id="tP" aria-pressed="false">إيقاف مؤقت</button>
+        <button data-v="0.45,0.28">زاوية افتراضية</button>
+        <button data-v="0,0.12">أمامية</button>
+        <button data-v="0,1.35">من الأعلى</button>
+        <button id="toolsGuideBtn" type="button" aria-expanded="false" aria-controls="experimentGuide">إظهار
+          الدليل</button>
+      </div>
+    </div>
+  </div>
+  <section class="experiment-guide" id="experimentGuide" hidden>
+    <h2>دليل التجربة</h2>
+    <h3>الأدوات</h3>
+    <ul>
+      <li>شريط سعة المرسل يغيّر تردد المرسل، وشريط سعة المستقبل يغيّر تردد دائرة الاستقبال، من العلاقة f = 1 /
+        (2π√(LC)).</li>
+      <li>زر «اضبط المستقبل على الرنين» يحرّك سعة المستقبل حتى يتساوى الترددان.</li>
+      <li>زر «الصوت» يُسمع نغمة تعلو كلما اقترب الاستقبال من الرنين. أزرار العرض تُظهر الموجة والشحنات والمجالات
+        والتسميات.</li>
+    </ul>
+    <h3>طريقة الاستخدام</h3>
+    <ul>
+      <li>اسحب المشهد لتدويره، ثم حرّك سعة المستقبل ببطء وراقب شدة الاستقبال ومنحنى الرنين.</li>
+      <li>غيّر سعة المرسل ثم أعد ضبط المستقبل: لا يُستقبل المرسل جيدًا إلا عند تساوي التردد.</li>
+      <li>الشحنات الصفراء تهتز في الأسلاك، ولون لوحي المتسعة يتبدل بين الأحمر والأزرق، ويتوهج الملف عندما يكون التيار
+        أعظم ما يمكن.</li>
+    </ul>
+    <h3>المحصلة والغرض</h3>
+    <ul>
+      <li>① الدائرة المهتزة تتغذى بالطاقة فتولّد إشارة كهربائية بتردد f. ② تحث تيارًا في ملف الهوائي بالحث المتبادل. ③
+        يبث سلك الهوائي موجات كهرومغناطيسية بالتردد نفسه.</li>
+      <li>④ تولّد الموجات تيارًا متناوبًا في هوائي المستقبل. ⑤ يحث هذا التيار قوة دافعة في ملف دائرة الاستقبال، وتبلغ
+        أقصى قيمة عند الرنين. ⑥ يمر التيار عبر الدايود والسماعة فنسمع الإشارة.</li>
+      <li>للتبسيط رُسمت السماعة على التوالي في دائرة الاستقبال، ولم تُرسم المتسعة الثابتة المجاورة لها.</li>
+    </ul>
+  </section>
+  <script>
+    const C = 3e8, TAU = Math.PI * 2, L0 = 2.5e-6, Q = 15, CU = '#c58b3c', D = 6.8, SC = 1.25, WY = 6.2, WZ = .63;
+    const S = { cT: 100, cR: 160, tgt: null, on: 1, wv: 1, ch: 1, cp: 1, lb: 1, snd: 0, ph: 0, t: 0, paused: matchMedia('(prefers-reduced-motion:reduce)').matches };
+    let yaw = .45, pitch = .28, tyaw = .45, tpitch = .28, drag = null, th = {}, au = null;
+    const $ = id => document.getElementById(id), cv = $('cv'), ctx = cv.getContext('2d'); let cw = 0, ch = 0;
+    const fOf = c => 1 / (TAU * Math.sqrt(L0 * c * 1e-12)) / 1e6, cl = (v, a, b) => Math.max(a, Math.min(b, v));
+    const hOf = (ft, fr) => { const a = ft / fr; return 1 / Math.sqrt(1 + Q * Q * (a - 1 / a) ** 2) };
+    function readTheme() { const s = getComputedStyle(document.documentElement);['panel', 'panel2', 'ink', 'mut', 'line', 'E', 'B', 'pos', 'neg', 'acc', 'ok'].forEach(k => th[k] = s.getPropertyValue('--' + k).trim()) }
+    function resize() { const r = cv.getBoundingClientRect(), d = Math.min(devicePixelRatio || 1, 2); cw = r.width; ch = r.height; cv.width = cw * d; cv.height = ch * d; ctx.setTransform(d, 0, 0, d, 0, 0) }
+    new ResizeObserver(resize).observe(cv);
+    matchMedia('(prefers-color-scheme:dark)').addEventListener('change', readTheme);
+    function P(x, y, z) {
+      y -= 4.6; z += .2; const cy = Math.cos(yaw), sy = Math.sin(yaw), cp = Math.cos(pitch), sp = Math.sin(pitch);
+      const x1 = x * cy + z * sy, z1 = -x * sy + z * cy, y2 = y * cp + z1 * sp, z2 = -y * sp + z1 * cp, s = 42 / (42 + z2), k = Math.min(cw / 25, ch / 12.6);
+      return [cw / 2 + x1 * s * k, ch / 2 - y2 * s * k, s, k]
+    }
+    function pl(a, col, w) { ctx.beginPath(); a.forEach((p, i) => { const q = P(p[0], p[1], p[2]); i ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1]) }); ctx.strokeStyle = col; ctx.lineWidth = w; ctx.lineJoin = 'round'; ctx.stroke() }
+    function poly(a, fill, al, st) { ctx.beginPath(); a.forEach((p, i) => { const q = P(p[0], p[1], p[2]); i ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1]) }); ctx.closePath(); ctx.globalAlpha = al; ctx.fillStyle = fill; ctx.fill(); ctx.globalAlpha = 1; if (st) { ctx.strokeStyle = st; ctx.lineWidth = 1.2; ctx.stroke() } }
+    function head(x, y, dx, dy, col) { const a = Math.atan2(dy, dx), h = 7; ctx.beginPath(); ctx.moveTo(x + h * Math.cos(a), y + h * Math.sin(a)); ctx.lineTo(x + h * Math.cos(a + 2.5), y + h * Math.sin(a + 2.5)); ctx.lineTo(x + h * Math.cos(a - 2.5), y + h * Math.sin(a - 2.5)); ctx.closePath(); ctx.fillStyle = col; ctx.fill() }
+    function tag(txt, x, y, col) { ctx.font = '700 12px Tajawal,sans-serif'; ctx.direction = 'rtl'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; const w = ctx.measureText(txt).width + 16; ctx.globalAlpha = .9; ctx.fillStyle = th.panel; ctx.beginPath(); ctx.roundRect(x - w / 2, y - 12, w, 24, 12); ctx.fill(); ctx.globalAlpha = 1; ctx.strokeStyle = col; ctx.lineWidth = 1.2; ctx.stroke(); ctx.fillStyle = th.ink; ctx.fillText(txt, x, y) }
+    const wtag = (t, p, c) => { const q = P(p[0], p[1], p[2]); tag(t, q[0], q[1], c || th.mut) };
+    function ltag(t, m, ap, lp, col) { const a = P(...m(ap)), b = P(...m(lp)); ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.strokeStyle = col; ctx.lineWidth = 1; ctx.stroke(); ctx.beginPath(); ctx.arc(a[0], a[1], 3, 0, TAU); ctx.fillStyle = col; ctx.fill(); tag(t, b[0], b[1], col) }
+
+    const AN = [[[0, 2.4, .5], [0, 6, .5]], [[0, 2.4, 1.7], [0, 2.4, 2.1], [0, 1.25, 2.1]], [[0, .95, 2.1], [0, 0, 2.1]]];
+    const TK = [[[0, 2.4, -1.7], [0, 2.4, -2.2], [-2.6, 2.4, -2.2], [-2.6, 2.4, -1.5]], [[-2.6, 2.4, -1.3], [-2.6, 2.4, -.5], [0, 2.4, -.5]]];
+    const TR = [TK[0], [[-2.6, 2.4, -1.3], [-2.6, 2.4, -.5], [-1.5, 2.4, -.5]], [[-.8, 2.4, -.5], [0, 2.4, -.5]]];
+    function coil(m, z0, z1, amp, ph) {
+      const a = []; for (let i = 0; i <= 80; i++) { const t = i / 80; a.push(m([.45 * Math.cos(t * TAU * 6), 2.4 + .45 * Math.sin(t * TAU * 6), z0 + (z1 - z0) * t])) }
+      const g = amp * Math.abs(Math.cos(ph)); if (S.cp && g > .05) { ctx.globalAlpha = Math.min(1, g); pl(a, th.B, 11); ctx.globalAlpha = 1 } pl(a, CU, 3.6)
+    }
+    function plate(m, c, ax, q) {
+      const s = .55, [x, y, z] = c, p = ax === 'z' ? [[x - s, y - s, z], [x + s, y - s, z], [x + s, y + s, z], [x - s, y + s, z]] : [[x - s, y, z - s], [x + s, y, z - s], [x + s, y, z + s], [x - s, y, z + s]];
+      poly(p.map(m), q >= 0 ? th.pos : th.neg, S.cp ? .2 + .75 * Math.min(1, Math.abs(q)) : .35, th.mut)
+    }
+    function dots(pcs, m, amp, ph) {
+      if (!S.ch || amp < .02) return; const d = Math.sin(ph) * amp * .6; ctx.fillStyle = '#ffe066';
+      pcs.forEach(pc => {
+        let L = 0; const cm = [0]; for (let i = 1; i < pc.length; i++) { L += Math.hypot(pc[i][0] - pc[i - 1][0], pc[i][1] - pc[i - 1][1], pc[i][2] - pc[i - 1][2]); cm.push(L) }
+        for (let p0 = .2; p0 < L; p0 += .5) {
+          const p = cl(p0 + d, 0, L); let i = 1; while (i < cm.length - 1 && cm[i] < p) i++; const f = (p - cm[i - 1]) / (cm[i] - cm[i - 1] || 1), a = pc[i - 1], b = pc[i],
+            q = P(...m([a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, a[2] + (b[2] - a[2]) * f])); ctx.beginPath(); ctx.arc(q[0], q[1], 3.2 * q[2], 0, TAU); ctx.fill()
+        }
+      })
+    }
+    function flux(m, amp, ph) {
+      const c = Math.cos(ph) * amp; if (!S.cp || Math.abs(c) < .05) return;
+      [0, 1, 2, 3].forEach(j => {
+        const g = j * Math.PI / 2 + .4, f = t => m([.9 * (1 - Math.cos(t)) * Math.cos(g), 2.4 + .9 * (1 - Math.cos(t)) * Math.sin(g), 2.5 * Math.sin(t)]), a = [];
+        for (let i = 0; i <= 40; i++)a.push(f(i / 40 * TAU)); ctx.globalAlpha = Math.min(1, Math.abs(c)) * .8; pl(a, th.B, 1.4);
+        if (j % 2 === 0) { const p = P(...f(Math.PI / 2)), q = P(...f(Math.PI / 2 + .05)), s = Math.sign(c); head(p[0], p[1], (q[0] - p[0]) * s, (q[1] - p[1]) * s, th.B) } ctx.globalAlpha = 1
+      })
+    }
+    function station(ox, dir, rx, aT, aA, ph) {
+      const m = p => [ox + dir * p[0] * SC, p[1] * SC, p[2] * SC], pcs = rx ? TR : TK;
+      poly([[-3.3, 0, -3.6], [1, 0, -3.6], [1, 0, 3.2], [-3.3, 0, 3.2]].map(m), th.panel2, .7, th.line);
+      poly([[-.9, .02, 1.6], [.9, .02, 1.6], [.9, .02, 2.6], [-.9, .02, 2.6]].map(m), th.mut, .35, th.mut);
+      [-.5, 0, .5].forEach(o => pl([[o - .4, .03, 1.6], [o + .4, .03, 2.6]].map(m), th.mut, 1));
+      flux(m, aT, ph);
+      pcs.concat(AN).forEach(pc => pl(pc.map(m), CU, 3.2));
+      coil(m, -1.7, -.5, aT, ph); coil(m, .5, 1.7, aA, ph);
+      pl([[0, 6, .5], [-.5, 6.7, .5]].map(m), CU, 3.2); pl([[0, 6, .5], [.5, 6.7, .5]].map(m), CU, 3.2);
+      plate(m, [-2.6, 2.4, -1.5], 'z', aT * Math.sin(ph)); plate(m, [-2.6, 2.4, -1.3], 'z', -aT * Math.sin(ph));
+      plate(m, [0, 1.25, 2.1], 'y', aA * Math.sin(ph)); plate(m, [0, .95, 2.1], 'y', -aA * Math.sin(ph));
+      const a = P(...m([-3.3, 1.7, -1.9])), b = P(...m([-1.9, 3.1, -.9])); ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.strokeStyle = th.acc; ctx.lineWidth = 2.4; ctx.stroke(); head(b[0], b[1], b[0] - a[0], b[1] - a[1], th.acc);
+      if (rx) {
+        poly([[-1.6, 2.68, -2.2], [-1.6, 2.12, -2.2], [-1, 2.4, -2.2]].map(m), '#ddd', 1); pl([[-1, 2.7, -2.2], [-1, 2.1, -2.2]].map(m), th.ink, 3);
+        const c = [-1.15, 2.4, -.5], e = [];[-1, 1].forEach(x => [-1, 1].forEach(y => [-1, 1].forEach(z => e.push(m([c[0] + x * .35, c[1] + y * .35, c[2] + z * .28])))));
+        [[0, 1, 3, 2], [4, 5, 7, 6], [0, 1, 5, 4], [2, 3, 7, 6], [0, 2, 6, 4], [1, 3, 7, 5]].forEach(f => poly(f.map(i => e[i]), '#555', .8, th.ink));
+        const q = P(...m(c)), h = hOf(fOf(S.cT), fOf(S.cR)) * S.on;
+        if (h > .04) for (let i = 0; i < 3; i++) { ctx.globalAlpha = h * (1 - i * .28) * (.6 + .4 * Math.sin(S.ph * 2 - i)); ctx.beginPath(); ctx.arc(q[0], q[1] - 12, 20 + 12 * i, -2.2, -.9); ctx.strokeStyle = th.ink; ctx.lineWidth = 2; ctx.stroke() } ctx.globalAlpha = 1
+      }
+      dots(pcs, m, aT, ph); dots(AN, m, aA, ph);
+      if (S.lb) {
+        const w = (t, a, l, c) => ltag(t, m, a, l, c || th.mut);
+        w(rx ? '⑤ دائرة الاستقبال المهتزة' : '① الدائرة المهتزة', [0, 2.9, -1.1], [-1.6, 6.6, -2.2]); w(rx ? '④ ملف الهوائي' : '② ملف الهوائي', [0, 1.95, 1.1], [-1.4, -1.3, 2.9]);
+        w('الهوائي', [0, 6.7, .5], [-1.2, 7.2, .5]); w('الأرض', [0, 0, 2.4], [1.5, -1.3, 3.4]); w('متسعة متغيرة', [-2.6, 3, -1.4], [-3, 5.1, -1.4], th.acc);
+        if (rx) { w('دايود', [-1.3, 2.7, -2.2], [-1.3, 4, -2.2]); w('⑥ سماعة', [-1.15, 1.95, -.5], [-2.6, -1.3, -.8]) }
+      }
+    }
+    function draw() {
+      const ft = fOf(S.cT), fr = fOf(S.cR), H = hOf(ft, fr), on = S.on, ph = S.ph; ctx.clearRect(0, 0, cw, ch);
+      ctx.globalAlpha = .6; for (let x = -12; x <= 12; x += 2)pl([[x, 0, -4.6], [x, 0, 4.2]], th.line, 1); for (let z = -4; z <= 4; z += 2)pl([[-12, 0, z], [12, 0, z]], th.line, 1); ctx.globalAlpha = 1;
+      // wave
+      const lam = 60 / ft, k = TAU / lam, env = x => Math.min(1, (x + D) / 2) * (1 - .25 * (x + D) / (2 * D)), e = x => env(x) * Math.cos(k * (x + D) - ph);
+      if (S.wv && on) {
+        ctx.globalAlpha = .5; for (let x = -D + .4; x <= D - .3; x += .4)pl([[x, WY, WZ], [x, WY + 1.3 * e(x), WZ]], th.E, 1); ctx.globalAlpha = 1;
+        const n = []; for (let x = -D; x <= D + .01; x += .1)n.push(x); pl(n.map(x => [x, WY, WZ + 1.3 * e(x)]), th.B, 2.6); pl(n.map(x => [x, WY + 1.3 * e(x), WZ]), th.E, 2.8);
+        if (S.lb) { wtag('③ موجات كهرومغناطيسية', [0, 8.8, WZ], th.E) }
+        const e10 = e(D); for (let y = 4.2; y <= 7.6; y += 1.1) { const p = P(D - .7, y, WZ), q = P(D - .7, y + .8 * e10, WZ); ctx.beginPath(); ctx.moveTo(p[0], p[1]); ctx.lineTo(q[0], q[1]); ctx.strokeStyle = th.E; ctx.lineWidth = 2.4; ctx.stroke(); head(q[0], q[1], q[0] - p[0], q[1] - p[1], th.E) }
+      }
+      const o = on ? 1 : 0;
+      station(-D, 1, 0, o, o, ph); station(D, -1, 1, o * H, o * .75, ph);
+      if (S.lb) { wtag('جهاز الإرسال', [-D - .4, 10, 0], th.ink); wtag('جهاز الاستقبال', [D + .4, 10.6, 0], th.ink) }
+      // resonance curve overlay
+      const bw = Math.min(210, cw * .32), bh = 66, bx = cw / 2 - bw / 2, by = ch - bh - 30;
+      ctx.globalAlpha = .9; ctx.fillStyle = th.panel; ctx.beginPath(); ctx.roundRect(bx, by - 18, bw, bh + 36, 10); ctx.fill(); ctx.globalAlpha = 1; ctx.strokeStyle = th.line; ctx.lineWidth = 1; ctx.stroke();
+      const X = f => bx + 8 + (f - 6.5) / 10.5 * (bw - 16), Y = h => by + bh - h * bh; ctx.beginPath(); for (let i = 0; i <= 80; i++) { const f = 6.5 + 10.5 * i / 80; i ? ctx.lineTo(X(f), Y(hOf(ft, f))) : ctx.moveTo(X(f), Y(hOf(ft, f))) } ctx.strokeStyle = th.B; ctx.lineWidth = 2; ctx.stroke();
+      ctx.setLineDash([3, 3]); ctx.beginPath(); ctx.moveTo(X(ft), by); ctx.lineTo(X(ft), by + bh); ctx.strokeStyle = th.mut; ctx.lineWidth = 1; ctx.stroke(); ctx.setLineDash([]);
+      ctx.beginPath(); ctx.arc(X(fr), Y(H), 5.5, 0, TAU); ctx.fillStyle = H > .9 ? th.ok : th.acc; ctx.fill();
+      ctx.font = '700 12px Tajawal,sans-serif'; ctx.direction = 'rtl'; ctx.textAlign = 'center'; ctx.fillStyle = th.ink; ctx.fillText('منحنى الرنين', bx + bw / 2, by - 8); ctx.fillStyle = th.mut; ctx.fillText('المتقطع: المرسل • النقطة: المستقبل', bx + bw / 2, by + bh + 14);
+      if (au) au.g.gain.setTargetAtTime(S.snd && on ? H * H * .1 : 0, au.a.currentTime, .05);
+    }
+    function stat() {
+      const ft = fOf(S.cT), fr = fOf(S.cR), H = hOf(ft, fr) * S.on;
+      $('rt').innerHTML = ft.toFixed(2) + ' <small>MHz</small>'; $('rr').innerHTML = fr.toFixed(2) + ' <small>MHz</small>'; $('rl').innerHTML = (C / ft / 1e6).toFixed(1) + ' <small>م</small>';
+      $('rh').textContent = Math.round(H * 100) + '%'; $('mi').style.width = H * 100 + '%'; $('cto').textContent = S.cT + ' pF'; $('cro').textContent = Math.round(S.cR) + ' pF';
+      $('eq').innerHTML = '<b>f = 1 / (2π√(LC))</b> &nbsp;|&nbsp; المرسل: ' + ft.toFixed(2) + ' MHz &nbsp;|&nbsp; المستقبل: ' + fr.toFixed(2) + ' MHz';
+      $('hint').textContent = !S.on ? 'المرسل متوقف: لا توجد موجات في الفضاء ولا تيار في دائرة الاستقبال.' : H > .9 ? 'رنين: تردد دائرة الاستقبال يساوي تردد الموجات القادمة، فيبلغ التيار المحثوث أعظم قيمة وتُسمع الإشارة بوضوح.' : H > .35 ? 'قريب من الرنين: غيّر سعة المستقبل قليلًا حتى يتطابق التردد ويزداد التيار.' : 'بعيد عن الرنين: التيار المحثوث في دائرة الاستقبال ضعيف جدًا، اضبط السعة حتى يتساوى التردد.'
+    }
+    let last = 0;
+    function frame(t) {
+      const dt = Math.min((t - last) / 1000, .05); last = t;
+      if (!S.paused) S.ph = (S.ph + dt * TAU * fOf(S.cT) / 10 * .6) % (TAU * 1000);
+      if (S.tgt !== null) { const d = S.tgt - S.cR; if (Math.abs(d) < .5) { S.cR = S.tgt; S.tgt = null } else S.cR += Math.sign(d) * Math.min(Math.abs(d), dt * 45); $('cr').value = S.cR; stat() }
+      yaw += (tyaw - yaw) * .12; pitch += (tpitch - pitch) * .12; draw(); requestAnimationFrame(frame)
+    }
+    const cl2 = (id, k) => $(id).onclick = e => { S[k] = !S[k]; e.target.setAttribute('aria-pressed', !!S[k]); stat() };
+    $('ct').oninput = e => { S.cT = +e.target.value; stat() };
+    $('cr').oninput = e => { S.cR = +e.target.value; S.tgt = null; stat() };
+    $('tune').onclick = () => { S.tgt = S.cT };
+    [['tOn', 'on'], ['tW', 'wv'], ['tC', 'ch'], ['tF', 'cp'], ['tL', 'lb']].forEach(([i, k]) => cl2(i, k));
+    $('tS').onclick = e => {
+      S.snd = !S.snd; e.target.setAttribute('aria-pressed', !!S.snd);
+      if (S.snd && !au) { const a = new (window.AudioContext || window.webkitAudioContext)(), o = a.createOscillator(), g = a.createGain(); o.frequency.value = 330; g.gain.value = 0; o.connect(g); g.connect(a.destination); o.start(); au = { a, g } } if (au && au.a.state === 'suspended') au.a.resume()
+    };
+    $('tP').onclick = e => { S.paused = !S.paused; e.target.setAttribute('aria-pressed', S.paused); e.target.textContent = S.paused ? 'تشغيل' : 'إيقاف مؤقت' };
+    document.querySelectorAll('[data-v]').forEach(b => b.onclick = () => { [tyaw, tpitch] = b.dataset.v.split(',').map(Number) });
+    cv.onpointerdown = e => { cv.setPointerCapture(e.pointerId); drag = { x: e.clientX, y: e.clientY } };
+    cv.onpointermove = e => { if (!drag) return; const dx = e.clientX - drag.x, dy = e.clientY - drag.y; drag.x = e.clientX; drag.y = e.clientY; yaw = tyaw = tyaw - dx * .008; pitch = tpitch = cl(tpitch + dy * .006, -.2, 1.45) };
+    cv.onpointerup = cv.onpointercancel = () => drag = null;
+    cv.onkeydown = e => { const m = { ArrowLeft: [.1, 0], ArrowRight: [-.1, 0], ArrowUp: [0, -.08], ArrowDown: [0, .08] }[e.key]; if (!m) return; e.preventDefault(); tyaw += m[0]; tpitch = cl(tpitch + m[1], -.2, 1.45) };
+    $('toolsGuideBtn').onclick = e => { const p = $('experimentGuide'), s = p.hidden; p.hidden = !s; e.target.textContent = s ? 'إخفاء الدليل' : 'إظهار الدليل'; e.target.setAttribute('aria-expanded', s ? 'true' : 'false'); if (s) p.scrollIntoView({ behavior: 'smooth', block: 'start' }) };
+    readTheme(); resize(); stat(); if (S.paused) { $('tP').setAttribute('aria-pressed', true); $('tP').textContent = 'تشغيل' }
+    requestAnimationFrame(frame);
+  </script>
+</body>
+
+</html>
