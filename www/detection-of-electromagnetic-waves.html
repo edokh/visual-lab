@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>الكشف عن الموجات الكهرومغناطيسية</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="css/back-nav.css">
+<style>
+:root{--bg:#0a0f1f;--panel:#121a33;--panel2:#18224a;--ink:#eaf0ff;--mut:#93a0c4;--line:#2a3664;--E:#ff9a3c;--B:#3cc8ff;--pos:#e5484d;--neg:#4f6cf0;--acc:#e04a9a;--acc2:#6a5cff;--ok:#3ddc84;color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]){--bg:#eef2fb;--panel:#fff;--panel2:#e6ecfa;--ink:#10162b;--mut:#4b587c;--line:#c5d0ee;--E:#e0690a;--B:#0a86c8;--pos:#d63a3f;--neg:#3550d8;--acc:#c93a85;--acc2:#4b3de0;--ok:#1f9d55;color-scheme:light}}
+:root[data-theme="dark"]{--bg:#0a0f1f;color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:Tajawal,"Segoe UI",Tahoma,sans-serif;line-height:1.5}
+header{padding:14px 18px 6px}
+h1{margin:0;font-size:1.35rem;font-weight:700}
+.eq{margin:4px 0 0;color:var(--mut);font-size:.95rem;min-height:1.5em}
+.eq b{color:var(--ink)}
+.wrap{direction:ltr;display:grid;grid-template-columns:320px 1fr;gap:12px;padding:10px 14px 18px}
+.wrap>*{direction:rtl}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.side{display:flex;flex-direction:column;gap:12px}
+h2{margin:0 0 8px;font-size:1rem;font-weight:700}
+.reads{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0}
+.reads div{background:var(--panel2);border-radius:8px;padding:6px 10px}
+.reads dt{font-size:.78rem;color:var(--mut)}
+.reads dd{margin:0;font-size:1.05rem;font-weight:700;font-variant-numeric:tabular-nums}
+.reads small{font-weight:400;color:var(--mut);font-size:.75rem}
+.meter{height:10px;background:var(--panel2);border-radius:6px;overflow:hidden;margin:10px 0 2px}
+.meter i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--acc),var(--ok));transition:width .15s}
+label{display:flex;justify-content:space-between;align-items:baseline;font-size:.9rem;margin-bottom:4px}
+output{font-weight:700;direction:ltr}
+input[type=range]{width:100%;accent-color:var(--acc);margin:0 0 10px}
+button{font:inherit;font-size:.88rem;color:var(--ink);background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:6px 13px;cursor:pointer}
+button:hover{border-color:var(--acc2)}
+button[aria-pressed=true]{background:linear-gradient(90deg,var(--acc),var(--acc2));border-color:transparent;color:#fff}
+button:focus-visible,input:focus-visible,canvas:focus-visible{outline:2px solid var(--E);outline-offset:2px}
+.hint{margin:0;font-size:.88rem;color:var(--mut);border-right:3px solid var(--acc);padding-right:10px;min-height:7em}
+.main{display:flex;flex-direction:column;gap:10px;min-width:0}
+.stage{position:relative;flex:1;min-height:440px;background:radial-gradient(ellipse at 50% 45%,var(--panel2),var(--panel) 75%);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor:grab}
+canvas:active{cursor:grabbing}
+.tip{position:absolute;top:8px;left:12px;font-size:.78rem;color:var(--mut);pointer-events:none}
+.bar{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
+.seg{display:flex;flex-direction:column;gap:6px;margin-bottom:10px}
+.experiment-guide{margin:0 14px 18px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 18px}
+.experiment-guide h2{font-size:1.1rem}.experiment-guide h3{font-size:.95rem;margin:10px 0 4px;color:var(--E)}
+.experiment-guide ul{margin:0;padding-inline-start:20px;color:var(--mut);font-size:.9rem}
+@media (max-width:860px){.wrap{grid-template-columns:1fr}.stage{min-height:380px}}
+</style>
+</head>
+<body>
+<a class="vl-back" href="chapter-4.html" aria-label="العودة">
+<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="back_icon"><path stroke-linecap="round" stroke-width="2.5" stroke-linejoin="round" d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3"/></svg>
+</a>
+<header>
+<h1>الكشف عن الموجات الكهرومغناطيسية</h1>
+<p class="eq" id="eq" aria-live="polite"></p>
+</header>
+<div class="wrap">
+<aside class="side">
+<section class="panel" aria-label="القراءات">
+<h2>القراءات</h2>
+<dl class="reads">
+<div><dt>تردد الموجة f</dt><dd id="rw"></dd></div>
+<div><dt>تردد الدائرة الرنينية f</dt><dd id="rr"></dd></div>
+<div><dt>الطول الموجي λ</dt><dd id="rl"></dd></div>
+<div><dt>الإشارة المستلمة</dt><dd id="rs"></dd></div>
+</dl>
+<div class="meter" aria-hidden="true"><i id="mi"></i></div>
+</section>
+<section class="panel" aria-label="التحكم">
+<h2>طريقة الكشف</h2>
+<div class="seg" id="modes">
+<button id="m1" aria-pressed="true">بالمجال الكهربائي (شكل 17)</button>
+<button id="m2" aria-pressed="false">بالمجال المغناطيسي (شكل 18)</button>
+</div>
+<label for="fw">تردد الموجة الواردة <output id="fwo">10 MHz</output></label>
+<input id="fw" type="range" min="7.5" max="15.5" step="0.1" value="10">
+<label for="cc">سعة المتسعة المتغيرة <output id="cco">160 pF</output></label>
+<input id="cc" type="range" min="40" max="200" step="1" value="160">
+<div id="thBox" hidden>
+<label for="th">زاوية الحلقة عن الوضع العمودي على B <output id="tho">0°</output></label>
+<input id="th" type="range" min="-90" max="90" step="1" value="0">
+</div>
+<button id="tune">اضبط الدائرة على الرنين</button>
+</section>
+<p class="hint" id="hint"></p>
+</aside>
+<div class="main">
+<div class="stage"><canvas id="cv" tabindex="0" aria-label="مشهد ثلاثي الأبعاد للكشف عن الموجات الكهرومغناطيسية، اسحب لتدويره أو استخدم الأسهم"></canvas><span class="tip">اسحب لتدوير المشهد</span></div>
+<div class="bar">
+<button id="tW" aria-pressed="true">الموجة</button>
+<button id="tC" aria-pressed="true">الشحنات</button>
+<button id="tF" aria-pressed="true">المجالات في الملفات</button>
+<button id="tL" aria-pressed="true">التسميات</button>
+<button id="tP" aria-pressed="false">إيقاف مؤقت</button>
+<button data-v="0.4,0.28">زاوية افتراضية</button>
+<button data-v="0,0.12">أمامية</button>
+<button data-v="1.2,0.3">جانبية</button>
+<button data-v="0,1.35">من الأعلى</button>
+<button id="toolsGuideBtn" type="button" aria-expanded="false" aria-controls="experimentGuide">إظهار الدليل</button>
+</div>
+</div>
+</div>
+<section class="experiment-guide" id="experimentGuide" hidden>
+<h2>دليل التجربة</h2>
+<h3>الأدوات</h3>
+<ul>
+<li>أزرار «طريقة الكشف» تبدّل بين الهوائي العمودي (يستلم المجال الكهربائي) وحلقة الهوائي (تستلم المجال المغناطيسي).</li>
+<li>شريط تردد الموجة وشريط سعة المتسعة، وزر «اضبط الدائرة على الرنين» يجعل f = 1 / (2π√(LC)) مساويًا لتردد الموجة.</li>
+<li>شريط زاوية الحلقة (في الطريقة الثانية) لتدوير مستوى الحلقة بالنسبة إلى المجال المغناطيسي.</li>
+</ul>
+<h3>طريقة الاستخدام</h3>
+<ul>
+<li>في الطريقة الأولى: لاحظ الشحنات في الهوائي وهي تتحرك إلى أعلى وأسفل مع اتجاه المجال E، وكيف يحث الملف تيارًا في الدائرة الرنينية.</li>
+<li>غيّر السعة ببطء وراقب شدة الإشارة على الشاشة ومنحنى الرنين: تبلغ ذروتها عند تساوي التردد.</li>
+<li>في الطريقة الثانية: دوّر الحلقة، فتكون الإشارة أكبر ما يمكن عندما يكون مستوى الحلقة عموديًا على B وتنعدم عندما يوازيه.</li>
+</ul>
+<h3>المحصلة والغرض</h3>
+<ul>
+<li>المجال الكهربائي للموجة يحرّك شحنات الهوائي إلى أعلى وأسفل فيتولد تيار متناوب بتردد الموجة، ويُنقل بالحث المتبادل إلى الدائرة الرنينية.</li>
+<li>المجال المغناطيسي المتغير يولّد قوة دافعة محثوثة في الحلقة، ولهذا يختلف استقبال أجهزة الراديو الصغيرة باتجاهها.</li>
+<li>بتغيير سعة المتسعة نصل إلى الرنين فنحصل على أقوى إشارة تُرسل إلى مرحلة التكبير (RF amplifier).</li>
+</ul>
+</section>
+<script>
+const C=3e8,TAU=Math.PI*2,L0=2.5e-6,Q=15,CU='#c58b3c',XS=2,WY=6.2,X1=XS+1.2,X2=XS+4.6,XC=XS+2.8;
+const S={f:10,c:160,mode:1,deg:0,tgt:null,wv:1,ch:1,cp:1,lb:1,ph:0,paused:matchMedia('(prefers-reduced-motion:reduce)').matches};
+let yaw=.4,pitch=.28,tyaw=.4,tpitch=.28,drag=null,th={};
+const $=id=>document.getElementById(id),cv=$('cv'),ctx=cv.getContext('2d');let cw=0,ch=0;
+const fOf=c=>1/(TAU*Math.sqrt(L0*c*1e-12))/1e6,cl=(v,a,b)=>Math.max(a,Math.min(b,v)),hOf=(ft,fr)=>{const a=ft/fr;return 1/Math.sqrt(1+Q*Q*(a-1/a)**2)};
+function readTheme(){const s=getComputedStyle(document.documentElement);['panel','panel2','ink','mut','line','E','B','pos','neg','acc','ok'].forEach(k=>th[k]=s.getPropertyValue('--'+k).trim())}
+function resize(){const r=cv.getBoundingClientRect(),d=Math.min(devicePixelRatio||1,2);cw=r.width;ch=r.height;cv.width=cw*d;cv.height=ch*d;ctx.setTransform(d,0,0,d,0,0)}
+new ResizeObserver(resize).observe(cv);
+matchMedia('(prefers-color-scheme:dark)').addEventListener('change',readTheme);
+function P(x,y,z){y-=3.6;x-=.1;z+=.2;const cy=Math.cos(yaw),sy=Math.sin(yaw),cp=Math.cos(pitch),sp=Math.sin(pitch);
+ const x1=x*cy+z*sy,z1=-x*sy+z*cy,y2=y*cp+z1*sp,z2=-y*sp+z1*cp,s=42/(42+z2),k=Math.min(cw/23,ch/12.6);return[cw/2+x1*s*k,ch/2-y2*s*k,s,k]}
+function pl(a,col,w){ctx.beginPath();a.forEach((p,i)=>{const q=P(p[0],p[1],p[2]);i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1])});ctx.strokeStyle=col;ctx.lineWidth=w;ctx.lineJoin='round';ctx.stroke()}
+function poly(a,fill,al,st){ctx.beginPath();a.forEach((p,i)=>{const q=P(p[0],p[1],p[2]);i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1])});ctx.closePath();ctx.globalAlpha=al;ctx.fillStyle=fill;ctx.fill();ctx.globalAlpha=1;if(st){ctx.strokeStyle=st;ctx.lineWidth=1.2;ctx.stroke()}}
+function head(x,y,dx,dy,col){const a=Math.atan2(dy,dx),h=7;ctx.beginPath();ctx.moveTo(x+h*Math.cos(a),y+h*Math.sin(a));ctx.lineTo(x+h*Math.cos(a+2.5),y+h*Math.sin(a+2.5));ctx.lineTo(x+h*Math.cos(a-2.5),y+h*Math.sin(a-2.5));ctx.closePath();ctx.fillStyle=col;ctx.fill()}
+function arr(a,b,col,w){pl([a,b],col,w);const p=P(...a),q=P(...b);head(q[0],q[1],q[0]-p[0],q[1]-p[1],col)}
+function tag(txt,x,y,col){ctx.font='700 12px Tajawal,sans-serif';ctx.direction='rtl';ctx.textAlign='center';ctx.textBaseline='middle';const w=ctx.measureText(txt).width+16;ctx.globalAlpha=.9;ctx.fillStyle=th.panel;ctx.beginPath();ctx.roundRect(x-w/2,y-12,w,24,12);ctx.fill();ctx.globalAlpha=1;ctx.strokeStyle=col;ctx.lineWidth=1.2;ctx.stroke();ctx.fillStyle=th.ink;ctx.fillText(txt,x,y)}
+const wtag=(t,p,c)=>{const q=P(...p);tag(t,q[0],q[1],c||th.mut)};
+function ltag(t,ap,lp,col){const a=P(...ap),b=P(...lp);ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.strokeStyle=col;ctx.lineWidth=1;ctx.stroke();ctx.beginPath();ctx.arc(a[0],a[1],3,0,TAU);ctx.fillStyle=col;ctx.fill();tag(t,b[0],b[1],col)}
+
+const ZZ=[];for(let i=0;i<=10;i++)ZZ.push([X2+(i&&i<10?(i%2?.2:-.2):0),3.7-2*i/10,0]);
+const TUN=[[[X1,1.6,0],[X1,1,0],[X2,1,0],[X2,1.7,0]],[[X1,3.8,0],[X1,4.4,0],[XC-.1,4.4,0]],[[XC+.1,4.4,0],[X2,4.4,0],[X2,3.7,0]]];
+const OUT=[[[X2,4.4,0],[8.1,4.4,0]],[[X2,1,0],[8.1,1,0]]];
+const MAST=[[[XS,3.6,0],[XS,8,0]],[[XS,1.6,0],[XS,0,0]]];
+function coilY(cx,y0,y1,amp,ph){const a=[];for(let i=0;i<=80;i++){const t=i/80;a.push([cx+.45*Math.cos(t*TAU*7),y0+(y1-y0)*t,.45*Math.sin(t*TAU*7)])}
+ const g=amp*Math.abs(Math.cos(ph));if(S.cp&&g>.05){ctx.globalAlpha=Math.min(1,g);pl(a,th.B,11);ctx.globalAlpha=1}pl(a,CU,3.6)}
+function plate(c,q){const s=.55,[x,y,z]=c;poly([[x,y-s,z-s],[x,y+s,z-s],[x,y+s,z+s],[x,y-s,z+s]],q>=0?th.pos:th.neg,S.cp?.2+.75*Math.min(1,Math.abs(q)):.35,th.mut)}
+function dots(pcs,amp,ph){if(!S.ch||amp<.02)return;const d=Math.sin(ph)*amp*.6;ctx.fillStyle='#ffe066';
+ pcs.forEach(pc=>{let L=0;const cm=[0];for(let i=1;i<pc.length;i++){L+=Math.hypot(pc[i][0]-pc[i-1][0],pc[i][1]-pc[i-1][1],pc[i][2]-pc[i-1][2]);cm.push(L)}
+  for(let p0=.2;p0<L;p0+=.5){const p=cl(p0+d,0,L);let i=1;while(i<cm.length-1&&cm[i]<p)i++;const f=(p-cm[i-1])/(cm[i]-cm[i-1]||1),a=pc[i-1],b=pc[i],q=P(a[0]+(b[0]-a[0])*f,a[1]+(b[1]-a[1])*f,a[2]+(b[2]-a[2])*f);ctx.beginPath();ctx.arc(q[0],q[1],3.2*q[2],0,TAU);ctx.fill()}})}
+function flux(amp,ph){const c=Math.cos(ph)*amp;if(!S.cp||Math.abs(c)<.05)return;
+ [0,1,2].forEach(j=>{const g=j*Math.PI/3,f=t=>[XS+.6+.9*Math.cos(t)*Math.cos(g),2.7+1.7*Math.sin(t),.9*Math.cos(t)*Math.sin(g)],a=[];
+  for(let i=0;i<=40;i++)a.push(f(i/40*TAU));ctx.globalAlpha=Math.min(1,Math.abs(c))*.8;pl(a,th.B,1.4);const p=P(...f(0)),q=P(...f(.05)),s=Math.sign(c);head(p[0],p[1],(q[0]-p[0])*s,(q[1]-p[1])*s,th.B);ctx.globalAlpha=1})}
+function loop(e,aT,ph){const d=S.deg*Math.PI/180,ct=Math.cos(d),st=Math.sin(d),c=[XS+.2,6.2,0],R=1.5,pt=f=>[c[0]+R*Math.cos(f)*ct,c[1]+R*Math.sin(f),c[2]-R*Math.cos(f)*st],ring=[];
+ for(let i=0;i<=64;i++)ring.push(pt(-Math.PI/2+.3+(TAU-.6)*i/64));
+ poly(ring,th.B,.08+.25*Math.abs(ct),null);
+ const lead=[[ring[0],[XS+3.4,4.4,0]],[ring[64],[XS+2.2,4.4,0]]];
+ lead.forEach(l=>pl(l,CU,3));pl(ring,CU,3.8);dots([ring].concat(lead),aT,ph);
+ [[0,0],[.5,.3],[-.5,.3],[.4,-.5],[-.4,-.5],[0,.65]].forEach(([a,b])=>{const p=[c[0]+a*R*ct,c[1]+b*R,c[2]-a*R*st];arr(p,[p[0],p[1],p[2]+1.1*e],th.B,2)});
+ pl([c,[c[0]+2*st,c[1],c[2]+2*ct]],th.mut,1.2)}
+function draw(){
+ const fr=fOf(S.c),H=hOf(S.f,fr),ph=S.ph,m1=S.mode===1,cs=Math.cos(S.deg*Math.PI/180),aT=H*(m1?1:Math.abs(cs)),sg=aT;ctx.clearRect(0,0,cw,ch);
+ ctx.globalAlpha=.6;for(let x=-12;x<=12;x+=2)pl([[x,0,-3],[x,0,3]],th.line,1);for(let z=-3;z<=3;z+=2)pl([[-12,0,z],[12,0,z]],th.line,1);ctx.globalAlpha=1;
+ poly([[.4,0,-2],[10.8,0,-2],[10.8,0,2],[.4,0,2]],th.panel2,.75,th.line);
+ // wave
+ const lam=60/S.f,k=TAU/lam,e=x=>Math.min(1,(x+10)/2)*Math.cos(k*(x+10)-ph),xe=XS+1.7;
+ if(S.wv){ctx.globalAlpha=.5;for(let x=-9.6;x<=xe;x+=.4)pl([[x,WY,0],[x,WY+1.3*e(x),0]],th.E,1);ctx.globalAlpha=1;
+  const n=[];for(let x=-10;x<=xe;x+=.1)n.push(x);pl(n.map(x=>[x,WY,1.3*e(x)]),th.B,2.6);pl(n.map(x=>[x,WY+1.3*e(x),0]),th.E,2.8)}
+ arr([-9,3.6,0],[-6,3.6,0],th.ink,2);
+ // station
+ poly([[XS-.9,.02,-.6],[XS+.9,.02,-.6],[XS+.9,.02,.6],[XS-.9,.02,.6]],th.mut,.35,th.mut);
+ if(m1){flux(.8,ph);MAST.forEach(p=>pl(p,CU,3.4));pl([[XS,8,0],[XS-.5,8.7,0]],CU,3.2);pl([[XS,8,0],[XS+.5,8.7,0]],CU,3.2);
+  coilY(XS,1.6,3.6,.8,ph);dots(MAST,.8,ph);
+  const ee=e(XS);if(S.wv)for(let y=4.4;y<=7.8;y+=1.1)arr([XS-.6,y,0],[XS-.6,y+.8*ee,0],th.E,2.4)}
+ else loop(e(XS+.2),aT,ph);
+ coilY(X1,1.6,3.8,aT,ph);
+ TUN.concat(OUT).forEach(p=>pl(p,CU,3.2));
+ if(S.cp){ctx.globalAlpha=Math.min(1,aT*aT*1.5);pl(ZZ,th.E,10);ctx.globalAlpha=1}pl(ZZ,CU,3.2);
+ const q=aT*Math.sin(ph);plate([XC-.1,4.4,0],q);plate([XC+.1,4.4,0],-q);arr([XC-.9,3.6,-.6],[XC+.9,5.2,.6],th.acc,2.4);
+ dots(TUN.concat(OUT),aT,ph);
+ OUT.forEach(p=>{const a=P(...p[0]),b=P(...p[1]);head(b[0],b[1],b[0]-a[0],b[1]-a[1],CU)});
+ // amplifier box with scope
+ const E=[];[8.2,10.2].forEach(x=>[1.2,4.4].forEach(y=>[-1,1].forEach(z=>E.push([x,y,z]))));
+ [[0,1,3,2],[4,5,7,6],[0,1,5,4],[2,3,7,6],[0,2,6,4],[1,3,7,5]].forEach(f=>poly(f.map(i=>E[i]),'#555',.9,th.ink));
+ poly([[8.45,1.9,1.01],[9.95,1.9,1.01],[9.95,4,1.01],[8.45,4,1.01]],'#071410',1,th.mut);
+ pl([[8.45,2.95,1.01],[9.95,2.95,1.01]],'rgba(92,255,157,.3)',1);
+ const w=[];for(let i=0;i<=60;i++){const u=i/60;w.push([8.5+1.4*u,2.95+.9*sg*Math.sin(TAU*2.2*u-ph*2),1.02])}pl(w,'#5cff9d',2);
+ // labels
+ if(S.lb){const L=(t,a,l,c)=>ltag(t,a,l,c||th.mut);
+  wtag('المجال الكهربائي E',[-6.5,8.5,0],th.E);wtag('المجال المغناطيسي B',[-3.5,WY,2.2],th.B);wtag('اتجاه الانتشار',[-7.5,2.8,0],th.ink);
+  L('ملف L',[X1,1.6,0],[X1,-.9,0]);L('مقاومة R',[X2,1.7,0],[X2,-.9,0]);L('دائرة الرنين',[XC,1,0],[XC,-2,0],th.ink);
+  L('متسعة متغيرة C',[XC,5,0],[XS+4.4,5.9,0],th.acc);L('إلى مرحلة التكبير (RF)',[9.2,4.4,0],[9.2,6.2,0]);
+  if(m1){L('هوائي عمودي (يستلم E)',[XS,8,0],[XS-2.6,9.4,0],th.E);L('ملف الهوائي',[XS,2.6,0],[XS-2.6,3,0]);L('الأرض',[XS,0,0],[XS-1.8,-1.2,0])}
+  else L('حلقة الهوائي (تستلم B)',[XS+.2,7.7,0],[XS-2.4,9.2,0],th.B)}
+ // resonance curve
+ const bw=Math.min(210,cw*.32),bh=66,bx=12,by=ch-bh-30;
+ ctx.globalAlpha=.9;ctx.fillStyle=th.panel;ctx.beginPath();ctx.roundRect(bx,by-18,bw,bh+36,10);ctx.fill();ctx.globalAlpha=1;ctx.strokeStyle=th.line;ctx.lineWidth=1;ctx.stroke();
+ const X=f=>bx+8+(f-6)/11*(bw-16),Y=h=>by+bh-h*bh;ctx.beginPath();for(let i=0;i<=80;i++){const f=6+11*i/80;i?ctx.lineTo(X(f),Y(hOf(S.f,f))):ctx.moveTo(X(f),Y(hOf(S.f,f)))}ctx.strokeStyle=th.B;ctx.lineWidth=2;ctx.stroke();
+ ctx.setLineDash([3,3]);ctx.beginPath();ctx.moveTo(X(S.f),by);ctx.lineTo(X(S.f),by+bh);ctx.strokeStyle=th.mut;ctx.stroke();ctx.setLineDash([]);
+ ctx.beginPath();ctx.arc(X(fr),Y(H),5.5,0,TAU);ctx.fillStyle=H>.9?th.ok:th.acc;ctx.fill();
+ ctx.font='700 12px Tajawal,sans-serif';ctx.direction='rtl';ctx.textAlign='center';ctx.fillStyle=th.ink;ctx.fillText('منحنى الرنين',bx+bw/2,by-8);ctx.fillStyle=th.mut;ctx.fillText('المتقطع: الموجة • النقطة: الدائرة',bx+bw/2,by+bh+14);
+}
+function stat(){const fr=fOf(S.c),m1=S.mode===1,g=m1?1:Math.abs(Math.cos(S.deg*Math.PI/180)),H=hOf(S.f,fr),sg=H*g;
+ $('rw').innerHTML=S.f.toFixed(1)+' <small>MHz</small>';$('rr').innerHTML=fr.toFixed(2)+' <small>MHz</small>';$('rl').innerHTML=(C/S.f/1e6).toFixed(1)+' <small>م</small>';
+ $('rs').textContent=Math.round(sg*100)+'%';$('mi').style.width=sg*100+'%';$('fwo').textContent=S.f.toFixed(1)+' MHz';$('cco').textContent=Math.round(S.c)+' pF';$('tho').textContent=S.deg+'°';
+ $('eq').innerHTML='<b>f = 1 / (2π√(LC))</b> &nbsp;|&nbsp; الموجة: '+S.f.toFixed(1)+' MHz &nbsp;|&nbsp; الدائرة: '+fr.toFixed(2)+' MHz';
+ const b=m1?'المجال الكهربائي E يحرّك شحنات الهوائي إلى أعلى وأسفل بتردد الموجة، فيحث ملف الهوائي تيارًا متناوبًا في الدائرة الرنينية.':'المجال المغناطيسي B المتغير يخترق الحلقة فتتولد فيها قوة دافعة محثوثة، وتكون أعظم ما يمكن عندما يكون مستوى الحلقة عموديًا على B.';
+ $('hint').textContent=b+(!m1&&g<.1?' الحلقة الآن موازية لـ B فلا تتولد إشارة تقريبًا. ':' ')+(H>.9?'رنين: تردد الدائرة يساوي تردد الموجة فتكون الإشارة أقوى ما يمكن.':H>.35?'قريب من الرنين: عدّل السعة قليلًا.':'بعيد عن الرنين: الإشارة ضعيفة، غيّر السعة حتى يتساوى التردد.')}
+function setMode(n){S.mode=n;$('m1').setAttribute('aria-pressed',n===1);$('m2').setAttribute('aria-pressed',n===2);$('thBox').hidden=n===1;stat()}
+let last=0;
+function frame(t){const dt=Math.min((t-last)/1000,.05);last=t;
+ if(!S.paused)S.ph=(S.ph+dt*TAU*S.f/10*.6)%(TAU*1000);
+ if(S.tgt!==null){const d=S.tgt-S.c;if(Math.abs(d)<.5){S.c=S.tgt;S.tgt=null}else S.c+=Math.sign(d)*Math.min(Math.abs(d),dt*45);$('cc').value=S.c;stat()}
+ yaw+=(tyaw-yaw)*.12;pitch+=(tpitch-pitch)*.12;draw();requestAnimationFrame(frame)}
+$('m1').onclick=()=>setMode(1);$('m2').onclick=()=>setMode(2);
+$('fw').oninput=e=>{S.f=+e.target.value;stat()};
+$('cc').oninput=e=>{S.c=+e.target.value;S.tgt=null;stat()};
+$('th').oninput=e=>{S.deg=+e.target.value;stat()};
+$('tune').onclick=()=>{S.tgt=cl(1e12/(L0*(TAU*S.f*1e6)**2),40,200)};
+[['tW','wv'],['tC','ch'],['tF','cp'],['tL','lb']].forEach(([i,k])=>$(i).onclick=e=>{S[k]=!S[k];e.target.setAttribute('aria-pressed',!!S[k])});
+$('tP').onclick=e=>{S.paused=!S.paused;e.target.setAttribute('aria-pressed',S.paused);e.target.textContent=S.paused?'تشغيل':'إيقاف مؤقت'};
+document.querySelectorAll('[data-v]').forEach(b=>b.onclick=()=>{[tyaw,tpitch]=b.dataset.v.split(',').map(Number)});
+cv.onpointerdown=e=>{cv.setPointerCapture(e.pointerId);drag={x:e.clientX,y:e.clientY}};
+cv.onpointermove=e=>{if(!drag)return;const dx=e.clientX-drag.x,dy=e.clientY-drag.y;drag.x=e.clientX;drag.y=e.clientY;yaw=tyaw=tyaw-dx*.008;pitch=tpitch=cl(tpitch+dy*.006,-.2,1.45)};
+cv.onpointerup=cv.onpointercancel=()=>drag=null;
+cv.onkeydown=e=>{const m={ArrowLeft:[.1,0],ArrowRight:[-.1,0],ArrowUp:[0,-.08],ArrowDown:[0,.08]}[e.key];if(!m)return;e.preventDefault();tyaw+=m[0];tpitch=cl(tpitch+m[1],-.2,1.45)};
+$('toolsGuideBtn').onclick=e=>{const p=$('experimentGuide'),s=p.hidden;p.hidden=!s;e.target.textContent=s?'إخفاء الدليل':'إظهار الدليل';e.target.setAttribute('aria-expanded',s?'true':'false');if(s)p.scrollIntoView({behavior:'smooth',block:'start'})};
+readTheme();resize();stat();if(S.paused){$('tP').setAttribute('aria-pressed',true);$('tP').textContent='تشغيل'}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
