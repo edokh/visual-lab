@@ -28,7 +28,7 @@
       padding-bottom: env(safe-area-inset-bottom, 0px)
     }
 
-    @media (prefers-color-scheme:light) {
+    /* @media (prefers-color-scheme:light) {
       :root:not([data-theme="dark"]) {
         --bg: #eef2fb;
         --panel: #fff;
@@ -45,7 +45,7 @@
         --ok: #1f9d55;
         color-scheme: light
       }
-    }
+    } */
 
     :root[data-theme="dark"] {
       --bg: #0a0f1f;
@@ -539,11 +539,16 @@
       if (S.lb) { wtag('جهاز الإرسال', [-D - .4, 10, 0], th.ink); wtag('جهاز الاستقبال', [D + .4, 10.6, 0], th.ink) }
       // resonance curve overlay
       const bw = Math.min(210, cw * .32), bh = 66, bx = cw / 2 - bw / 2, by = ch - bh - 30;
-      ctx.globalAlpha = .9; ctx.fillStyle = th.panel; ctx.beginPath(); ctx.roundRect(bx, by - 18, bw, bh + 36, 10); ctx.fill(); ctx.globalAlpha = 1; ctx.strokeStyle = th.line; ctx.lineWidth = 1; ctx.stroke();
-      const X = f => bx + 8 + (f - 6.5) / 10.5 * (bw - 16), Y = h => by + bh - h * bh; ctx.beginPath(); for (let i = 0; i <= 80; i++) { const f = 6.5 + 10.5 * i / 80; i ? ctx.lineTo(X(f), Y(hOf(ft, f))) : ctx.moveTo(X(f), Y(hOf(ft, f))) } ctx.strokeStyle = th.B; ctx.lineWidth = 2; ctx.stroke();
+      ctx.globalAlpha = .9; ctx.fillStyle = th.panel; ctx.beginPath(); ctx.roundRect(bx-600, by - 18, bw, bh + 36, 10); ctx.fill(); ctx.globalAlpha = 1; ctx.strokeStyle = th.line; ctx.lineWidth = 1; ctx.stroke();
+      const X = f => bx-600 + 8 + (f - 6.5) / 10.5 * (bw - 16), Y = h => by + bh - h * bh; ctx.beginPath(); for (let i = 0; i <= 80; i++) { const f = 6.5 + 10.5 * i / 80; i ? ctx.lineTo(X(f), Y(hOf(ft, f))) : ctx.moveTo(X(f), Y(hOf(ft, f))) } ctx.strokeStyle = th.B; ctx.lineWidth = 2; ctx.stroke();
       ctx.setLineDash([3, 3]); ctx.beginPath(); ctx.moveTo(X(ft), by); ctx.lineTo(X(ft), by + bh); ctx.strokeStyle = th.mut; ctx.lineWidth = 1; ctx.stroke(); ctx.setLineDash([]);
-      ctx.beginPath(); ctx.arc(X(fr), Y(H), 5.5, 0, TAU); ctx.fillStyle = H > .9 ? th.ok : th.acc; ctx.fill();
-      ctx.font = '700 12px Tajawal,sans-serif'; ctx.direction = 'rtl'; ctx.textAlign = 'center'; ctx.fillStyle = th.ink; ctx.fillText('منحنى الرنين', bx + bw / 2, by - 8); ctx.fillStyle = th.mut; ctx.fillText('المتقطع: المرسل • النقطة: المستقبل', bx + bw / 2, by + bh + 14);
+      ctx.beginPath();
+      ctx.arc(X(fr), Y(H), 5.5, 0, TAU); ctx.fillStyle = H > .9 ? th.ok : th.acc; ctx.fill();
+      ctx.font = '700 12px Tajawal,sans-serif';
+      ctx.direction = 'rtl';
+      ctx.textAlign = 'center'; ctx.fillStyle = th.ink;
+      ctx.fillText('منحنى الرنين', bx-600 + bw / 2, by - 8);
+      ctx.fillStyle = th.mut; ctx.fillText('المتقطع: المرسل • النقطة: المستقبل', bx-600 + bw / 2, by + bh + 14);
       if (au) au.g.gain.setTargetAtTime(S.snd && on ? H * H * .1 : 0, au.a.currentTime, .05);
     }
     function stat() {
